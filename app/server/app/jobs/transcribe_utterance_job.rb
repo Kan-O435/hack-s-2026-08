@@ -1,7 +1,16 @@
 class TranscribeUtteranceJob < ApplicationJob
   queue_as :default
 
-  retry_on StandardError, wait: :polynomially_longer, attempts: 3
+  # 3回リトライしても失敗した場合、無言で(文字起こし中...)のまま止まらないよう、
+  # 失敗を表す文言に置き換えて通知する
+  retry_on StandardError, wait: :polynomially_longer, attempts: 3 do |job, error|
+    utterance = Utterance.find_by(id: job.arguments.first)
+    next unless utterance
+
+    Rails.logger.error("TranscribeUtteranceJob failed permanently for utterance=#{utterance.id}: #{error.message}")
+    utterance.update!(transcript: "(文字起こしに失敗しました)")
+    RoomChannel.broadcast_to(utterance.room, job.send(:transcribed_payload, utterance))
+  end
 
   def perform(utterance_id, audio_base64, content_type)
     utterance = Utterance.find_by(id: utterance_id)

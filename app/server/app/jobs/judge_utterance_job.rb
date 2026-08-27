@@ -1,7 +1,16 @@
 class JudgeUtteranceJob < ApplicationJob
   queue_as :default
 
-  retry_on Anthropic::Errors::APIStatusError, wait: :polynomially_longer, attempts: 3
+  # APIStatusError(429等)だけでなく、APIConnectionError/APITimeoutError(回線の瞬断)も
+  # 同じAPIErrorの子孫なので、親クラスで指定してどちらもリトライ対象にする
+  retry_on Anthropic::Errors::APIError, wait: :polynomially_longer, attempts: 3 do |job, error|
+    utterance = Utterance.find_by(id: job.arguments.first)
+    next unless utterance
+
+    # cringe_scoreはnilのままにする(フロントは未判定をscore=0と同じ扱いにしているため、
+    # 見た目上は「冷笑なし」と区別なく表示されるだけで済む)。運用側が気づけるようログにだけ残す
+    Rails.logger.error("JudgeUtteranceJob failed permanently for utterance=#{utterance.id}: #{error.message}")
+  end
 
   def perform(utterance_id)
     utterance = Utterance.find_by(id: utterance_id)
