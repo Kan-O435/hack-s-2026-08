@@ -6,6 +6,7 @@ export type RoomSummary = {
   passcode: string;
   status: RoomStatus;
   host_user_id: number;
+  max_participants: number;
 };
 
 export type Participant = {
@@ -67,11 +68,14 @@ export type ResultLine = {
   reason: string | null;
 };
 
+export type VoiceRoastStatus = "unavailable" | "processing" | "ready" | "failed";
+
 export type ParticipantResult = {
   user_id: number;
   nickname: string;
   total_score: number;
   critique: string;
+  voice_roast_status: VoiceRoastStatus;
   top_lines: ResultLine[];
 };
 

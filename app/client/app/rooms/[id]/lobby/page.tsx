@@ -112,7 +112,7 @@ export default function LobbyPage() {
 
       <div className="border border-black p-4">
         <p className="mb-2 text-sm font-bold text-black">
-          参加者({detail.participants.length}人)
+          参加者({detail.participants.length}/{detail.room.max_participants}人)
         </p>
         <ul className="flex flex-col gap-2">
           {detail.participants.map((p) => (
@@ -122,6 +122,11 @@ export default function LobbyPage() {
             </li>
           ))}
         </ul>
+        <p className="mt-2 text-xs text-black">
+          {detail.participants.length >= detail.room.max_participants
+            ? "満員です"
+            : `あと${detail.room.max_participants - detail.participants.length}人参加できます`}
+        </p>
       </div>
 
       {isHost ? (

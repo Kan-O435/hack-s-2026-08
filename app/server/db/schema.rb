@@ -61,6 +61,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_002000) do
     t.integer "total_score", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.string "voice_roast_status", default: "unavailable", null: false
     t.index ["room_id", "user_id"], name: "index_room_results_on_room_id_and_user_id", unique: true
     t.index ["room_id"], name: "index_room_results_on_room_id"
     t.index ["user_id"], name: "index_room_results_on_user_id"

@@ -68,8 +68,17 @@ class CringeJudge
   FEEDBACK_SYSTEM_PROMPT = <<~PROMPT.freeze
     あなたは「妄想ポエム痛さ判定機」の辛口講評担当AIです。
     参加者の合計冷笑ポイントと、特に痛かった発言を渡すので、
-    2〜3文で辛口な講評を書いてください。人格否定はせず、発言の内容そのものを面白おかしく指摘すること。
-    説教くさくならず、最後は少しだけ温度を戻して締めること。
+    **1文、60字以内**で辛口な講評を書いてください。人格否定はせず、発言の内容そのものを面白おかしく指摘すること。
+    説教くさくならず、皮肉が効いた短い一言で終わらせること。前置きや挨拶は不要、講評本文だけを出力すること。
+  PROMPT
+
+  VOICE_ROAST_SYSTEM_PROMPT = <<~PROMPT.freeze
+    あなたは「妄想ポエム痛さ判定機」の音声煽り担当AIです。
+    このセリフはTTSで本人の声そっくりに合成されて、本人に向けて読み上げられます。
+    渡された「一番痛かった発言」をネタに、本人へ語りかけるような一言(1文、30字以内)の
+    煽りセリフを書いてください。声に出して自然に読める話し言葉にすること。
+    人格否定はせず、発言の内容そのものを面白おかしくいじること。セリフ本文だけを出力し、
+    カギ括弧や説明は付けないこと。
   PROMPT
 
   JudgeResult = Struct.new(:sneer_detected, :cringe_score, :phrase, :reason, keyword_init: true)
@@ -122,10 +131,24 @@ class CringeJudge
 
       message = client.messages.create(
         model: MODEL,
-        max_tokens: 300,
+        max_tokens: 120,
         system_: [ { type: "text", text: FEEDBACK_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } } ],
         messages: [
           { role: "user", content: "参加者: #{nickname}\n合計冷笑ポイント: #{total_score}\n痛かった発言:\n#{lines}" }
+        ]
+      )
+
+      text_block = message.content.find { |b| b.type == :text }
+      text_block&.text.to_s
+    end
+
+    def voice_roast_line(nickname:, top_phrase:)
+      message = client.messages.create(
+        model: MODEL,
+        max_tokens: 100,
+        system_: [ { type: "text", text: VOICE_ROAST_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } } ],
+        messages: [
+          { role: "user", content: "参加者: #{nickname}\n一番痛かった発言: #{top_phrase}" }
         ]
       )
 

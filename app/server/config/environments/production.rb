@@ -46,7 +46,13 @@ Rails.application.configure do
   # Solid Cache/Queueは別DBを要求するため、単一Postgresで動かす都合上、
   # 開発環境と同じmemory_store/asyncのままにしている(単一インスタンス前提のデモ用途では実用上問題ない)。
   config.cache_store = :memory_store
-  config.active_job.queue_adapter = :async
+  # デフォルトのAsyncAdapterはCPUコア数依存(processor_count * 4)でスレッド数が決まり、
+  # database.ymlのプールサイズと連動しないため、Railway等の小さいコンテナだと
+  # DBプール枯渇やメモリ超過の原因になりうる。明示的に上限を切っておく。
+  config.active_job.queue_adapter = ActiveJob::QueueAdapters::AsyncAdapter.new(
+    min_threads: 1,
+    max_threads: ENV.fetch("JOB_MAX_THREADS", 5).to_i
+  )
 
   # Action CableのOrigin検証をフロントエンドのオリジンのみ許可する
   config.action_cable.allowed_request_origins = [ ENV.fetch("FRONTEND_ORIGIN", nil) ].compact
