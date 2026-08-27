@@ -421,11 +421,16 @@ Discord が間に合わない/詰まった場合のフォールバック。
 
 ## 11. 技術スタック(案)
 
+> インフラ(AWS)の詳細設計・Well-Architected Frameworkに沿った判断は [infrastructure.md](infrastructure.md) を参照。
+
 | レイヤー | 選択肢 |
 |---|---|
+| フロントエンド | Next.js |
+| バックエンド | Ruby on Rails(APIモード) |
+| インフラ | AWS(App Runner + RDS。詳細は infrastructure.md) |
 | 音声入力 | Discord (`discord.js` + `@discordjs/voice` + `prism-media`) / Web Speech API |
 | 音声認識 | Whisper (faster-whisper) / Web Speech API |
-| 形態素解析 | kuromoji.js |
+| 形態素解析 | kuromoji.js(ブラウザ内で完結、Railsは経由しない) |
 | 採点 | 自前(辞書 + 構文ルール) |
 | 講評・称号生成 | Claude |
 | 類似検索 | 埋め込み + ベクトル検索(件数が少ないので総当たりでも可) |
