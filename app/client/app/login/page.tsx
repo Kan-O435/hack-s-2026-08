@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { saveAuth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,15 +50,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-white p-6">
-      <div className="w-full max-w-sm border border-black p-8">
-        <h1 className="mb-6 text-center text-xl font-bold text-black">
+    <div className="flex flex-1 items-center justify-center bg-[var(--theme-page)] p-6 text-[var(--theme-text)] transition-colors">
+      <div className="w-full max-w-[470px] border border-[var(--theme-border)] bg-[var(--theme-surface)] px-6 py-8 transition-colors sm:px-9 sm:py-9">
+        <div className="mb-6 flex justify-end">
+          <ThemeToggle />
+        </div>
+
+        <h1 className="mb-8 text-center text-3xl font-bold text-[var(--theme-text)]">
           ログイン
         </h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="nickname" className="text-sm text-black">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="nickname"
+              className="text-xs font-bold text-[var(--theme-text)]"
+            >
               ニックネーム
             </label>
             <input
@@ -67,18 +75,22 @@ export default function LoginPage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={30}
-              className="border border-black bg-white px-3 py-2 text-black outline-none"
+              className="h-12 border border-[var(--theme-border)] bg-[var(--theme-surface-deep)] px-3.5 text-[var(--theme-text)] outline-none transition-colors placeholder:text-[var(--theme-placeholder)] focus:border-[var(--theme-border-strong)]"
               placeholder="たろう"
               autoFocus
             />
           </div>
 
-          {error && <p className="text-sm text-black">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-[var(--theme-danger-text)]">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="border border-black bg-white px-3 py-2 text-black disabled:opacity-50"
+            className="h-12 cursor-pointer border border-[var(--theme-border)] bg-[var(--theme-accent)] px-[18px] font-bold text-[var(--theme-accent-contrast)] transition-colors hover:bg-[var(--theme-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "はじめています..." : "はじめる"}
           </button>
