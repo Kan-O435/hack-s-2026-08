@@ -27,7 +27,7 @@ class CringeJudgeTest < ActiveSupport::TestCase
     messages.define_singleton_method(:create) { |**| response }
     client = Struct.new(:messages).new(messages)
 
-    result = CringeJudge.stub(:client, client) do
+    result = stub_singleton_method(CringeJudge, :client, client) do
       CringeJudge.judge("いつか世界を変える")
     end
 
@@ -41,7 +41,7 @@ class CringeJudgeTest < ActiveSupport::TestCase
     messages.define_singleton_method(:create) { |**| response }
     client = Struct.new(:messages).new(messages)
 
-    result = CringeJudge.stub(:client, client) do
+    result = stub_singleton_method(CringeJudge, :client, client) do
       CringeJudge.judge("今日は晴れですね")
     end
 
@@ -60,7 +60,7 @@ class CringeJudgeTest < ActiveSupport::TestCase
     messages.define_singleton_method(:create) { |**| response }
     client = Struct.new(:messages).new(messages)
 
-    result = CringeJudge.stub(:client, client) do
+    result = stub_singleton_method(CringeJudge, :client, client) do
       CringeJudge.judge("今日は晴れですね")
     end
 

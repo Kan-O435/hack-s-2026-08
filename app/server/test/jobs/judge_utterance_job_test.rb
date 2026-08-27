@@ -19,8 +19,8 @@ class JudgeUtteranceJobTest < ActiveJob::TestCase
     )
     broadcast = nil
 
-    CringeJudge.stub(:judge, result) do
-      RoomChannel.stub(:broadcast_to, ->(_room, payload) { broadcast = payload }) do
+    stub_singleton_method(CringeJudge, :judge, result) do
+      stub_singleton_method(RoomChannel, :broadcast_to, ->(_room, payload) { broadcast = payload }) do
         JudgeUtteranceJob.perform_now(utterance.id)
       end
     end
