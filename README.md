@@ -5,3 +5,4 @@
 ポエムを喋ると、その「痛さ」が数値化されて冷笑される装置。
 
 - 設計ドキュメント: [docs/concept.md](docs/concept.md)
+- 痛さスコアリング設計: [docs/scoring.md](docs/scoring.md)
