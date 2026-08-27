@@ -101,6 +101,8 @@ users ──1:N── room_participants ──N:1── rooms
 
 冷笑写真は `utterances` にバイナリを直接持たせず、Active Storageの `has_one_attached :sneer_photo` で1発話につき1枚を関連付ける。許可形式はJPEG/WebP、上限は5MBとする。ローカル・テスト環境はDisk、本番は `ACTIVE_STORAGE_SERVICE=amazon` を指定することでS3またはS3互換ストレージを利用する。
 
+MVPでは冷笑写真を発話者本人が図鑑から削除するまで保持する。本人による削除時はActive Storageのblobと `snapshot_captured_at` を同時に削除する。ルーム参加者は同じルームのカードを閲覧できるが、削除できるのは写真に紐づく発話者本人だけとする。ハッカソン終了後の一括削除は運用手順として別途実施する。
+
 ### room_results
 
 ルーム終了後、参加者ごとに1件。LLMの低速経路(scoring.md §7)の出力を保存する。
@@ -137,4 +139,3 @@ users ──1:N── room_participants ──N:1── rooms
 - [ ] `speech_coefficient` の算出式(pause/volume/speech_rateからどう1つの係数にするか)。scoring.mdに追記が必要
 - [ ] `has_alcohol` をUIから入力させるか、常時false固定にするか(screens.md §5と連動)
 - [ ] `room_participants.left_at` を実際に使うか(離脱検知の実装コスト次第)
-- [ ] 履歴の保持期間・削除ポリシー(ハッカソン後の後片付け、infrastructure.md §6と連動)

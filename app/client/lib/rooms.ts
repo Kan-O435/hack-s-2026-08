@@ -36,6 +36,31 @@ export type Utterance = {
   cringe_reason?: string | null;
 };
 
+export type SneerCard = {
+  id: number;
+  photo_url: string;
+  snapshot_captured_at: string | null;
+  speaker: { user_id: number; nickname: string };
+  utterance: {
+    transcript: string;
+    spoken_at: string;
+    cringe_score: number | null;
+    cringe_phrase: string | null;
+    cringe_reason: string | null;
+  };
+  room: { id: number; name: string };
+};
+
+export type SneerCardsResponse = {
+  cards: SneerCard[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+};
+
 export type ResultLine = {
   phrase: string;
   score: number;
