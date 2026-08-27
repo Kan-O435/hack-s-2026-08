@@ -22,6 +22,13 @@ module Api
         return render_error("invalid_passcode", "パスコードが見つかりません", :not_found) unless room
         return render_error("room_not_joinable", "このルームは参加を締め切っています", :conflict) unless room.waiting?
 
+        already_joined = room.room_participants.exists?(user: current_user)
+        if !already_joined && room.room_participants.count >= Room::MAX_PARTICIPANTS
+          return render_error(
+            "room_full", "このルームは満員です(最大#{Room::MAX_PARTICIPANTS}人)", :conflict
+          )
+        end
+
         room.room_participants.find_or_create_by!(user: current_user) do |p|
           p.joined_at = Time.current
         end
@@ -124,7 +131,8 @@ module Api
             name: room.name,
             passcode: room.passcode,
             status: room.status,
-            host_user_id: room.host_user_id
+            host_user_id: room.host_user_id,
+            max_participants: Room::MAX_PARTICIPANTS
           },
           participants: room.room_participants.includes(:user).order(:joined_at).map do |p|
             { user_id: p.user_id, nickname: p.user.nickname, joined_at: p.joined_at }

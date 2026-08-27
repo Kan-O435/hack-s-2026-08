@@ -6,6 +6,7 @@ export type RoomSummary = {
   passcode: string;
   status: RoomStatus;
   host_user_id: number;
+  max_participants: number;
 };
 
 export type Participant = {
