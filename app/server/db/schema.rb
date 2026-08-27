@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_181000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_181000) do
     t.integer "pause_before_ms"
     t.integer "realtime_score"
     t.bigint "room_id", null: false
+    t.boolean "sneer_detected", default: false, null: false
     t.float "speech_rate"
     t.datetime "spoken_at", null: false
     t.text "transcript", null: false
