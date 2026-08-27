@@ -74,8 +74,9 @@ LLM(Claude)が担うのは**講評文・称号の生成のみ**。同じ発言�
 Next.js(フロントエンド、未スキャフォールド) / Ruby on Rails APIモード(`app/server/`) / AWS(App Runner + RDS for PostgreSQL)。
 非同期ジョブはSidekiq+Redisではなく **Solid Queue**(Rails標準、DB上で完結)を採用し、インフラ要素を減らしている
 (Gemfileの `solid_queue` / `solid_cache` / `solid_cable` はこの決定を反映済み)。
-CORSは `config/initializers/cors.rb` に設定箇所があるが、現状コメントアウトされたまま
-(`rack-cors` gemもGemfileでコメントアウト)— Next.js側のオリジンが決まり次第、有効化が必要。
+CORSは `config/initializers/cors.rb` で有効化済み(`rack-cors` gem導入済み)。許可オリジンは環境変数
+`FRONTEND_ORIGIN`(未設定時は `http://localhost:3001`)。Next.js側は `docker compose` のRails(3000番)と
+ポートが衝突しないよう `next dev -p 3001` で起動する前提(`app/client/package.json` 参照)。
 
 ## 設計ドキュメント
 

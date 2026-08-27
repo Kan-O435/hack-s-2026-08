@@ -27,6 +27,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432
       RAILS_ENV: development
+      FRONTEND_ORIGIN: http://localhost:3001
     depends_on:
       db:
         condition: service_healthy
