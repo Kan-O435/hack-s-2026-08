@@ -30,6 +30,8 @@ services:
       FRONTEND_ORIGIN: http://localhost:3001
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEYが未設定です。リポジトリ直下に.envを作成し ANTHROPIC_API_KEY=sk-ant-... を書いてください}
       OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEYが未設定です。リポジトリ直下の.envに OPENAI_API_KEY=sk-... を書いてください(Whisper文字起こし用)}
+      # 音声クローン(結果画面の音声煽り)はおまけ機能のため、未設定でもアプリ全体は起動できるようにしている
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
     depends_on:
       db:
         condition: service_healthy

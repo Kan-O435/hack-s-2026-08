@@ -80,16 +80,37 @@ module Api
         }
       end
 
+      def voice_roast
+        room = Room.find_by(id: params[:id])
+        return render_error("not_found", "ルームが見つかりません", :not_found) unless room
+        unless room.room_participants.exists?(user: current_user)
+          return render_error("forbidden", "このルームの参加者ではありません", :forbidden)
+        end
+
+        result = RoomResult.find_by(room: room, user_id: params[:user_id])
+        unless result&.ready? && File.exist?(result.voice_roast_path)
+          return render_error("not_found", "音声はまだ用意できていません", :not_found)
+        end
+
+        send_file result.voice_roast_path, type: "audio/mpeg", disposition: "inline"
+      end
+
       private
 
       def result_json(room, result)
-        top_lines = room.utterances.where(user: result.user).order(cringe_score: :desc).limit(RoomResultJob::TOP_N)
+        # cringe_scoreがnilなのはまだ判定ジョブが終わっていない発話(文字起こし中プレースホルダ含む)なので除外する
+        top_lines = room.utterances
+          .where(user: result.user)
+          .where.not(cringe_score: nil)
+          .order(cringe_score: :desc)
+          .limit(RoomResultJob::TOP_N)
 
         {
           user_id: result.user_id,
           nickname: result.user.nickname,
           total_score: result.total_score,
           critique: result.critique,
+          voice_roast_status: result.voice_roast_status,
           top_lines: top_lines.map do |u|
             { phrase: u.cringe_phrase.presence || u.transcript, score: u.cringe_score.to_i, reason: u.cringe_reason }
           end

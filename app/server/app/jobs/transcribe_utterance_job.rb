@@ -8,9 +8,19 @@ class TranscribeUtteranceJob < ApplicationJob
     return unless utterance
 
     audio_bytes = Base64.decode64(audio_base64)
+    extension = extension_for(content_type)
+
+    VoiceSampleStore.save(
+      room_id: utterance.room_id,
+      user_id: utterance.user_id,
+      utterance_id: utterance.id,
+      extension: extension,
+      bytes: audio_bytes
+    )
+
     transcript = WhisperTranscriber.transcribe(
       audio_bytes,
-      filename: "utterance.#{extension_for(content_type)}",
+      filename: "utterance.#{extension}",
       content_type: content_type
     )
 
