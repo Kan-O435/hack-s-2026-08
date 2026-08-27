@@ -11,9 +11,12 @@ Rails.application.routes.draw do
       resources :rooms, only: [ :create, :show ]
       post "rooms/:passcode/join", to: "rooms#join"
       patch "rooms/:id/start", to: "rooms#start"
+      post "rooms/:room_id/utterances", to: "utterances#create"
       get "me/rooms", to: "me#rooms"
     end
   end
+
+  mount ActionCable.server => "/cable"
 
   # Defines the root path route ("/")
   # root "posts#index"

@@ -22,3 +22,12 @@ export type RoomDetail = {
 export type ApiErrorBody = {
   error?: { code: string; message: string };
 };
+
+export type Utterance = {
+  id: number;
+  room_id: number;
+  user_id: number;
+  nickname: string;
+  transcript: string;
+  spoken_at: string;
+};
