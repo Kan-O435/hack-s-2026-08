@@ -82,3 +82,6 @@ CORSは `config/initializers/cors.rb` に設定箇所があるが、現状コメ
 - `docs/concept.md` — 企画・コンセプト全体、チャットボットとの差別化ロジック(§3)、演出設計、実装優先度
 - `docs/scoring.md` — 痛さスコアリングの詳細設計(ルーブリック・few-shot・出力スキーマ・キャリブレーション手順)
 - `docs/infrastructure.md` — AWSインフラ設計。Well-Architected Frameworkの5本柱ごとの判断根拠と、意図的に見送った選択肢の記録
+- `docs/screens.md` — 画面設計(画面遷移、各画面の要素・操作、リアルタイム同期の考え方)
+- `docs/db_design.md` — DB設計(テーブル定義、認証まわりの設計方針)
+- `docs/api_design.md` — API設計(エンドポイント一覧、Action Cableチャンネル設計、LLM採点のジョブフロー)
