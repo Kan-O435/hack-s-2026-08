@@ -14,7 +14,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - リポジトリルート: `docs/` の設計ドキュメントのみ。フロントエンド(Next.js)はまだスキャフォールドされていない
 - `app/server/`: Rails API バックエンド。**独立したgitリポジトリ**(`.git`を持つ)としてルート配下にネストされている。ルートの `git status` からは単なる untracked ディレクトリとして見える。**`app/server` 配下のファイルをコミットする際は `app/server` に `cd` してから操作すること**(ルートで `git add app/` しても中身は追跡されない)
 
-## コマンド(app/server 配下、Ruby on Rails)
+## Docker で起動する
+
+リポジトリルートの `docker-compose.yml` で Rails + PostgreSQL がまとめて起動する(開発用)。
+
+```bash
+docker compose up -d       # 初回はビルドも走る。db:prepare が自動実行されるのでマイグレーション不要
+docker compose logs -f web # ログ確認
+docker compose down        # 停止(ボリュームは残る。データごと消すなら -v を付与)
+```
+
+- `http://localhost:3000/up` でヘルスチェック確認可能
+- ソースは `./app/server` を bind mount しているのでコード変更は再ビルド不要で反映される
+- DBのホスト公開ポートは **5433**(5432ではない)。他のプロジェクトのpostgresコンテナと衝突する環境があったための回避
+- `app/server/Dockerfile.dev` が開発用。`app/server/Dockerfile` は本番用(Kamal / AWS App Runner向け、`infrastructure.md`参照)で別物なので混同しないこと
+
+## コマンド(app/server 配下、Ruby on Rails。Dockerを使わずホストで直接動かす場合)
 
 すべて `app/server/` ディレクトリで実行する。
 
