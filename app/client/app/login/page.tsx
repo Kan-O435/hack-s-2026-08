@@ -49,15 +49,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-white p-6">
-      <div className="w-full max-w-sm border border-black p-8">
-        <h1 className="mb-6 text-center text-xl font-bold text-black">
+    <div className="flex flex-1 items-center justify-center bg-[#171c23] p-6 text-[#f4f6f8]">
+      <div className="w-full max-w-[470px] rounded-[14px] border border-white/25 bg-[#20262e] px-6 py-8 shadow-[0_18px_48px_rgba(0,0,0,0.28)] sm:px-9 sm:py-9">
+        <h1 className="mb-8 text-center text-3xl font-bold text-[#f4f6f8]">
           ログイン
         </h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="nickname" className="text-sm text-black">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="nickname"
+              className="text-xs font-bold text-[#7fa7c5]"
+            >
               ニックネーム
             </label>
             <input
@@ -67,18 +70,22 @@ export default function LoginPage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={30}
-              className="border border-black bg-white px-3 py-2 text-black outline-none"
+              className="h-12 rounded-[10px] border border-white/30 bg-[#151a20] px-3.5 text-[#f4f6f8] outline-none transition-colors placeholder:text-[#89929e] focus:border-white/70"
               placeholder="たろう"
               autoFocus
             />
           </div>
 
-          {error && <p className="text-sm text-black">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-[#ff6b6b]">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="border border-black bg-white px-3 py-2 text-black disabled:opacity-50"
+            className="h-12 cursor-pointer rounded-[10px] border border-white/20 bg-[#6f98b8] px-[18px] font-bold text-[#101820] transition-colors hover:bg-[#80a7c4] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "はじめています..." : "はじめる"}
           </button>
