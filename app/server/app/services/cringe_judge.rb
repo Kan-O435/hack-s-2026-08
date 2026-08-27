@@ -37,6 +37,8 @@ class CringeJudge
     要素Cは単なる愚痴・弱音とは区別すること(「疲れた」だけでは対象外、場や他者を否定して沈ませる発言のみ対象)。
 
     report_cringe_judgment ツールで必ず結果を報告してください。
+    - sneer_detected: 冷笑要素Aに当てはまる場合だけtrueにする。
+      冷笑要素B・Cだけに当てはまる場合や、冷笑要素がない場合はfalseにする
     - cringe_score: 0〜100の整数。要素A・B・Cいずれかに少しでも当てはまれば10点以上をつけてよい。
       複数の軸に当てはまるほど高くしてよい。気の利いた皮肉・見下し・茶化しほど高く(80点以上も積極的に)つけること。
       要素Cのみに該当する場合は40点を超えないこと。
@@ -52,11 +54,12 @@ class CringeJudge
     input_schema: {
       type: "object",
       properties: {
+        sneer_detected: { type: "boolean", description: "人や物事を見下す・茶化す冷笑要素Aを含むか" },
         cringe_score: { type: "integer", description: "0〜100の冷笑ポイント" },
         phrase: { type: "string", description: "最も痛いフレーズの引用" },
         reason: { type: "string", description: "一言の理由" }
       },
-      required: %w[cringe_score phrase reason],
+      required: %w[sneer_detected cringe_score phrase reason],
       additionalProperties: false
     },
     strict: true
@@ -78,7 +81,7 @@ class CringeJudge
     カギ括弧や説明は付けないこと。
   PROMPT
 
-  JudgeResult = Struct.new(:cringe_score, :phrase, :reason, keyword_init: true)
+  JudgeResult = Struct.new(:sneer_detected, :cringe_score, :phrase, :reason, keyword_init: true)
 
   # この3語が含まれる発話は判定基準に関わらず問答無用で120点(通常上限100を超える)
   FORCED_TRIGGER_WORDS = %w[うお ドワー きちー].freeze
@@ -89,6 +92,7 @@ class CringeJudge
       trigger = FORCED_TRIGGER_WORDS.find { |word| transcript.include?(word) }
       if trigger
         return JudgeResult.new(
+          sneer_detected: true,
           cringe_score: FORCED_TRIGGER_SCORE,
           phrase: transcript,
           reason: "「#{trigger}」を検出したため問答無用で#{FORCED_TRIGGER_SCORE}点"
@@ -105,13 +109,14 @@ class CringeJudge
       )
 
       block = message.content.find { |b| b.type == :tool_use }
-      return JudgeResult.new(cringe_score: 0, phrase: "", reason: "") unless block
+      return JudgeResult.new(sneer_detected: false, cringe_score: 0, phrase: "", reason: "") unless block
 
       input = block.input
       score = input[:cringe_score].to_i.clamp(0, 100)
 
       # score=0のとき、phrase/reasonにモデルが無関係な文字列を返すことがあるため強制的に空にする
       JudgeResult.new(
+        sneer_detected: score.positive? && input[:sneer_detected] == true,
         cringe_score: score,
         phrase: score.positive? ? input[:phrase].to_s : "",
         reason: score.positive? ? input[:reason].to_s : ""

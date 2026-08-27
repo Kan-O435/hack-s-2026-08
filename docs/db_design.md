@@ -90,9 +90,18 @@ users ──1:N── room_participants ──N:1── rooms
 | volume_drop_ratio | float | nullable | 声量の低下率(RMSの直前比) |
 | speech_rate | float | nullable | 話速(モーラ数/秒) |
 | realtime_score | integer | nullable | クライアント側の辞書スコアリング合計(参考値、最終スコアには直接使わない) |
+| sneer_detected | boolean | not null, default: false | 人や物事を見下す・茶化す「冷笑要素A」を含むか。冷笑図鑑の撮影トリガーに使う |
+| snapshot_captured_at | datetime | nullable | 冷笑検知後に端末が写真を撮影した時刻 |
+| cringe_score | integer | nullable | 発話単位の冷笑ポイント。未判定時はnull |
+| cringe_phrase | text | nullable | 発話中で最も冷笑ポイントの高いフレーズ |
+| cringe_reason | text | nullable | 発話単位の判定理由 |
 | created_at | datetime | | |
 
 `pause_before_ms` / `volume_drop_ratio` / `speech_rate` は concept.md §3.4 の「太字の3特徴量」に対応する生データ。これらから `room_results.speech_coefficient` を算出する具体的な計算式は未確定(scoring.md 側の宿題、§4 参照)。
+
+冷笑写真は `utterances` にバイナリを直接持たせず、Active Storageの `has_one_attached :sneer_photo` で1発話につき1枚を関連付ける。許可形式はJPEG/WebP、上限は5MBとする。ローカル・テスト環境はDisk、本番は `ACTIVE_STORAGE_SERVICE=amazon` を指定することでS3またはS3互換ストレージを利用する。
+
+MVPでは冷笑写真を発話者本人が図鑑から削除するまで保持する。本人による削除時はActive Storageのblobと `snapshot_captured_at` を同時に削除する。ルーム参加者は同じルームのカードを閲覧できるが、削除できるのは写真に紐づく発話者本人だけとする。ハッカソン終了後の一括削除は運用手順として別途実施する。
 
 ### room_results
 
@@ -130,4 +139,3 @@ users ──1:N── room_participants ──N:1── rooms
 - [ ] `speech_coefficient` の算出式(pause/volume/speech_rateからどう1つの係数にするか)。scoring.mdに追記が必要
 - [ ] `has_alcohol` をUIから入力させるか、常時false固定にするか(screens.md §5と連動)
 - [ ] `room_participants.left_at` を実際に使うか(離脱検知の実装コスト次第)
-- [ ] 履歴の保持期間・削除ポリシー(ハッカソン後の後片付け、infrastructure.md §6と連動)

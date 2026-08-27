@@ -57,7 +57,10 @@ Authorization: Bearer <device_token>
 | POST | `/rooms/:id/utterances` | 発話1区間の送信 | 要トークン、参加者のみ |
 | PATCH | `/rooms/:id/finish` | 会話終了(in_progress→finished)+採点ジョブ起動 | 要トークン、host のみ |
 | GET | `/rooms/:id/result` | 最終結果の取得(ポーリング用) | 要トークン、参加者のみ |
+| PUT | `/utterances/:id/sneer_photo` | 冷笑発話への撮影画像登録 | 要トークン、発話者本人のみ |
+| DELETE | `/utterances/:id/sneer_photo` | 冷笑発話の撮影画像削除 | 要トークン、発話者本人のみ |
 | GET | `/me/rooms` | 自分が参加した終了済みルーム一覧(履歴) | 要トークン |
+| GET | `/me/sneer_cards` | 参加ルームの冷笑図鑑カード一覧 | 要トークン |
 
 ---
 
@@ -136,6 +139,32 @@ host以外が呼ぶと `403`。`waiting` 以外の状態で呼ぶと `409`。
 
 レスポンス `201`: 保存された utterance。保存と同時に Action Cable で `utterance_created` を room 全体に broadcast する。
 
+### `PUT /api/v1/utterances/:id/sneer_photo`
+
+`utterance_scored` で `sneer_detected=true` を受信した発話者本人の端末が、撮影した写真をmultipart/form-dataで登録する。
+
+| フィールド | 型 | 必須 | 内容 |
+|---|---|---|---|
+| photo | file | yes | JPEGまたはWebP、最大5MB |
+| captured_at | ISO 8601 datetime | yes | 端末が写真を撮影した時刻 |
+
+同じ発話への再送では最初の写真を置き換えず、既存データを `200` で返す。初回保存は `201`。他人の発話は `403`、冷笑判定されていない発話や不正ファイルは `422` とする。写真URLは5分で失効する署名付きURLを返す。
+
+レスポンス:
+```json
+{
+  "utterance": {
+    "id": 42,
+    "snapshot_captured_at": "2026-08-28T12:34:56+09:00",
+    "photo_url": "https://..."
+  }
+}
+```
+
+### `DELETE /api/v1/utterances/:id/sneer_photo`
+
+発話者本人が自分の冷笑写真を削除する。添付ファイルと `snapshot_captured_at` を同時に削除し、成功時は `204` を返す。既に写真がない場合も `204` とする。他人の発話は `403`。
+
 ### `PATCH /api/v1/rooms/:id/finish`
 
 host以外は `403`。`in_progress` 以外は `409`。
@@ -195,6 +224,33 @@ host以外は `403`。`in_progress` 以外は `409`。
 }
 ```
 
+### `GET /api/v1/me/sneer_cards`
+
+現在のユーザーが参加したルームにある、写真保存済みの冷笑発話を撮影日時の新しい順に返す。1発話を1カードとして扱う。`page` と `per_page`（最大50）でページネーションする。
+
+レスポンス `200`:
+```json
+{
+  "cards": [
+    {
+      "id": 42,
+      "photo_url": "https://...",
+      "snapshot_captured_at": "2026-08-28T12:34:56+09:00",
+      "speaker": { "user_id": 2, "nickname": "はなこ" },
+      "utterance": {
+        "transcript": "成長って言葉、便利だよね",
+        "spoken_at": "2026-08-28T12:34:50+09:00",
+        "cringe_score": 85,
+        "cringe_phrase": "成長って言葉、便利だよね",
+        "cringe_reason": "概念を皮肉っぽく茶化している"
+      },
+      "room": { "id": 10, "name": "終電後の妄想会" }
+    }
+  ],
+  "pagination": { "page": 1, "per_page": 20, "total_count": 1, "total_pages": 1 }
+}
+```
+
 ---
 
 ## 4. Action Cable(Solid Cable)チャンネル設計
@@ -206,6 +262,8 @@ host以外は `403`。`in_progress` 以外は `409`。
 | `participant_joined` | `{ user_id, nickname, joined_at }` | 誰かが `join` した時 |
 | `room_started` | `{ started_at }` | host が `start` した時 |
 | `utterance_created` | utterance オブジェクト | 誰かが発話を送信した時 |
+| `utterance_transcribed` | utterance オブジェクト | 音声の文字起こしが完了した時 |
+| `utterance_scored` | `sneer_detected` と冷笑判定を含む utterance オブジェクト | 発話単位の冷笑判定が完了した時 |
 | `room_finished` | `{ finished_at }` | host が `finish` した時 |
 | `result_ready` | `{}`(中身は `GET /result` を叩かせる) | 採点ジョブ完了時 |
 
