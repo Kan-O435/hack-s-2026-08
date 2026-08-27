@@ -206,6 +206,8 @@ host以外は `403`。`in_progress` 以外は `409`。
 | `participant_joined` | `{ user_id, nickname, joined_at }` | 誰かが `join` した時 |
 | `room_started` | `{ started_at }` | host が `start` した時 |
 | `utterance_created` | utterance オブジェクト | 誰かが発話を送信した時 |
+| `utterance_transcribed` | utterance オブジェクト | 音声の文字起こしが完了した時 |
+| `utterance_scored` | `sneer_detected` と冷笑判定を含む utterance オブジェクト | 発話単位の冷笑判定が完了した時 |
 | `room_finished` | `{ finished_at }` | host が `finish` した時 |
 | `result_ready` | `{}`(中身は `GET /result` を叩かせる) | 採点ジョブ完了時 |
 

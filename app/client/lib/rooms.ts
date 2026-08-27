@@ -30,6 +30,7 @@ export type Utterance = {
   nickname: string;
   transcript: string;
   spoken_at: string;
+  sneer_detected?: boolean;
   cringe_score?: number | null;
   cringe_phrase?: string | null;
   cringe_reason?: string | null;
