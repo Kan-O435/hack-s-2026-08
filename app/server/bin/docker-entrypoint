@@ -2,7 +2,15 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
-  ./bin/rails db:prepare
+  # Postgres の private networking がコンテナ起動直後はまだ疎通していないことがあり、
+  # そのタイミングだと db:prepare が接続エラーで落ちるため数回リトライする。
+  for i in 1 2 3 4 5; do
+    if ./bin/rails db:prepare; then
+      break
+    fi
+    echo "db:prepare failed (attempt ${i}/5), retrying in 3s..." >&2
+    sleep 3
+  done
 fi
 
 exec "${@}"

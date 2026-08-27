@@ -85,20 +85,8 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
+  # cache/queue/cableは別DBに分けず、本番でもasyncアダプタ(config/environments/production.rb,
+  # config/cable.yml参照)を使う構成にしているため、primaryのみでよい。
+  primary:
     <<: *default
-    database: server_production
-    username: server
-    password: <%= ENV["SERVER_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: server_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: server_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: server_production_cable
-    migrations_paths: db/cable_migrate
+    url: <%= ENV["DATABASE_URL"] %>

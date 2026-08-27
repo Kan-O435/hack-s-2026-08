@@ -1,0 +1,4 @@
+# 環境変数(APIキー等の秘密情報)。.env.exampleだけは例外的にコミットする
+.env
+.env.local
+!.env.example
