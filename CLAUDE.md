@@ -9,10 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## リポジトリ構成
 
-このリポジトリは**2階層構造**になっている点に注意:
-
-- リポジトリルート: `docs/` の設計ドキュメントのみ。フロントエンド(Next.js)はまだスキャフォールドされていない
-- `app/server/`: Rails API バックエンド。**独立したgitリポジトリ**(`.git`を持つ)としてルート配下にネストされている。ルートの `git status` からは単なる untracked ディレクトリとして見える。**`app/server` 配下のファイルをコミットする際は `app/server` に `cd` してから操作すること**(ルートで `git add app/` しても中身は追跡されない)
+- `docs/`: 設計ドキュメント一式(下記)
+- `app/client/`: Next.js フロントエンド(App Router、TypeScript、Tailwind)
+- `app/server/`: Rails API バックエンド。**単一のgitリポジトリ内の通常のディレクトリ**(`app/server`配下も含めてルートの`git status`でそのまま追跡される。過去に「独立したgitリポジトリ」という記載があったが実態と異なっていたため訂正)
 
 ## Docker で起動する
 
@@ -71,12 +70,23 @@ LLM(Claude)が担うのは**講評文・称号の生成のみ**。同じ発言�
 
 ### 技術スタック
 
-Next.js(フロントエンド、未スキャフォールド) / Ruby on Rails APIモード(`app/server/`) / AWS(App Runner + RDS for PostgreSQL)。
-非同期ジョブはSidekiq+Redisではなく **Solid Queue**(Rails標準、DB上で完結)を採用し、インフラ要素を減らしている
-(Gemfileの `solid_queue` / `solid_cache` / `solid_cable` はこの決定を反映済み)。
+Next.js(`app/client/`) / Ruby on Rails APIモード(`app/server/`)。
+非同期ジョブ・Action Cable・キャッシュは、当初 Solid Queue/Solid Cache/Solid Cable(DB上で完結)を
+採用する予定だったが、**Railwayへのデプロイを機に本番でも`:async`/`memory_store`に統一した**(`config/environments/production.rb`,
+`config/cable.yml`)。理由: Solid系は本番想定でcache/queue/cable用に別DBを要求する設計になっており、
+Railwayの単一Postgres構成と相性が悪かったため。単一インスタンス前提のデモ用途なら実用上問題ない。
+Gemfileから`solid_queue`/`solid_cache`/`solid_cable`は削除済み。より高い信頼性が必要になったら再導入を検討する。
+
 CORSは `config/initializers/cors.rb` で有効化済み(`rack-cors` gem導入済み)。許可オリジンは環境変数
-`FRONTEND_ORIGIN`(未設定時は `http://localhost:3001`)。Next.js側は `docker compose` のRails(3000番)と
-ポートが衝突しないよう `next dev -p 3001` で起動する前提(`app/client/package.json` 参照)。
+`FRONTEND_ORIGIN`(ローカル開発時の未設定時は `http://localhost:3001`)。Next.js側は `docker compose` のRails(3000番)と
+ポートが衝突しないよう ローカル開発時は `next dev -p 3001` で起動する(`app/client/package.json` の `dev` スクリプト参照。
+`start`/本番はホスティング側がポートを管理するため固定ポートを付けていない)。
+
+### デプロイ
+
+「できるだけ簡単に」という方針で **Railway(Rails API + PostgreSQL)+ Vercel(Next.js)** を採用。
+`docs/infrastructure.md` にはAWS(App Runner + RDS + Amplify)の詳細設計が別途あるが、
+本番運用を見据える場合の代替案として残している(現時点の実デプロイ先はRailway/Vercel)。
 
 ## 設計ドキュメント
 

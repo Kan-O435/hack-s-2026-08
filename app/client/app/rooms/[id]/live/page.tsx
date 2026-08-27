@@ -6,12 +6,12 @@ import Link from "next/link";
 import { getAuth, type AuthUser } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { createRoomConsumer } from "@/lib/cable";
-import type { RoomDetail, Utterance } from "@/lib/rooms";
+import { cringeColor, type ApiErrorBody, type RoomDetail, type Utterance } from "@/lib/rooms";
 
-type UtteranceBroadcast = {
-  event: "utterance_created";
-  utterance: Utterance;
-};
+type RoomBroadcast =
+  | { event: "utterance_created"; utterance: Utterance }
+  | { event: "utterance_scored"; utterance: Utterance }
+  | { event: "room_finished"; finished_at: string };
 
 export default function LivePage() {
   const params = useParams<{ id: string }>();
@@ -24,6 +24,8 @@ export default function LivePage() {
   const [listening, setListening] = useState(false);
   const [manualText, setManualText] = useState("");
   const [interimText, setInterimText] = useState("");
+  const [finishing, setFinishing] = useState(false);
+  const navigatedRef = useRef(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const shouldListenRef = useRef(false);
@@ -51,9 +53,16 @@ export default function LivePage() {
     const subscription = consumer.subscriptions.create(
       { channel: "RoomChannel", room_id: params.id },
       {
-        received: (data: UtteranceBroadcast) => {
+        received: (data: RoomBroadcast) => {
           if (data.event === "utterance_created") {
             setUtterances((prev) => [...prev, data.utterance]);
+          } else if (data.event === "utterance_scored") {
+            setUtterances((prev) =>
+              prev.map((u) => (u.id === data.utterance.id ? data.utterance : u)),
+            );
+          } else if (data.event === "room_finished" && !navigatedRef.current) {
+            navigatedRef.current = true;
+            router.push(`/rooms/${params.id}/result`);
           }
         },
       },
@@ -160,17 +169,51 @@ export default function LivePage() {
     setManualText("");
   }
 
+  async function handleFinish() {
+    const auth = getAuth();
+    if (!auth) return;
+
+    setFinishing(true);
+    try {
+      const res = await apiFetch(`/api/v1/rooms/${params.id}/finish`, auth.token, {
+        method: "PATCH",
+      });
+
+      if (!res.ok) {
+        const body: ApiErrorBody = await res.json().catch(() => ({}));
+        setError(body.error?.message ?? "終了に失敗しました");
+      }
+      // 成功時の画面遷移はroom_finishedのブロードキャストを受けて行う(参加者全員が同時に遷移するため)
+    } finally {
+      setFinishing(false);
+    }
+  }
+
   if (!user) {
     return null;
   }
+
+  const isHost = detail?.room.host_user_id === user.id;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 bg-white p-6">
       <header className="flex items-center justify-between border border-black p-4">
         <p className="text-black">{detail?.room.name ?? "会話中"}</p>
-        <Link href="/home" className="border border-black bg-white px-3 py-1 text-sm text-black">
-          ホームに戻る
-        </Link>
+        <div className="flex gap-2">
+          {isHost && (
+            <button
+              type="button"
+              onClick={handleFinish}
+              disabled={finishing}
+              className="border border-black bg-white px-3 py-1 text-sm text-black disabled:opacity-50"
+            >
+              {finishing ? "終了しています..." : "会話を終了する"}
+            </button>
+          )}
+          <Link href="/home" className="border border-black bg-white px-3 py-1 text-sm text-black">
+            ホームに戻る
+          </Link>
+        </div>
       </header>
 
       {error && <p className="border border-black p-4 text-black">{error}</p>}
@@ -181,7 +224,11 @@ export default function LivePage() {
         ) : (
           <ul className="flex flex-col gap-2">
             {utterances.map((u) => (
-              <li key={u.id} className="text-black">
+              <li
+                key={u.id}
+                className="p-1 text-black"
+                style={{ backgroundColor: cringeColor(u.cringe_score) }}
+              >
                 <span className="font-bold">{u.nickname}: </span>
                 {u.transcript}
               </li>

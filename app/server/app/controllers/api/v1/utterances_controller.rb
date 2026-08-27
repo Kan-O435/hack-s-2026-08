@@ -14,6 +14,7 @@ module Api
 
         if utterance.save
           RoomChannel.broadcast_to(room, utterance_json(utterance))
+          JudgeUtteranceJob.perform_later(utterance.id)
           render json: utterance_json(utterance), status: :created
         else
           render_error("invalid_utterance", utterance.errors.full_messages.join(", "), :unprocessable_entity)
