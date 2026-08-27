@@ -3,6 +3,41 @@
 :root {
   --background: #ffffff;
   --foreground: #000000;
+  --theme-page: #171c23;
+  --theme-surface: #20262e;
+  --theme-surface-deep: #151a20;
+  --theme-surface-hover: #2a313a;
+  --theme-border: #ffffff;
+  --theme-border-strong: #ffffff;
+  --theme-text: #ffffff;
+  --theme-muted: #ffffff;
+  --theme-placeholder: #ffffff;
+  --theme-accent: #6f98b8;
+  --theme-accent-hover: #80a7c4;
+  --theme-accent-contrast: #ffffff;
+  --theme-danger-border: #ffffff;
+  --theme-danger-surface: #2b2024;
+  --theme-danger-text: #ffffff;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --theme-page: #ffffff;
+  --theme-surface: #ffffff;
+  --theme-surface-deep: #f4f6f8;
+  --theme-surface-hover: #e2e8ed;
+  --theme-border: #000000;
+  --theme-border-strong: #000000;
+  --theme-text: #000000;
+  --theme-muted: #000000;
+  --theme-placeholder: #000000;
+  --theme-accent: #557f9f;
+  --theme-accent-hover: #476e8c;
+  --theme-accent-contrast: #000000;
+  --theme-danger-border: #000000;
+  --theme-danger-surface: #fff1f2;
+  --theme-danger-text: #000000;
+  color-scheme: light;
 }
 
 @theme inline {

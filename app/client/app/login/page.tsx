@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { saveAuth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,9 +50,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-[#171c23] p-6 text-[#f4f6f8]">
-      <div className="w-full max-w-[470px] rounded-[14px] border border-white/25 bg-[#20262e] px-6 py-8 shadow-[0_18px_48px_rgba(0,0,0,0.28)] sm:px-9 sm:py-9">
-        <h1 className="mb-8 text-center text-3xl font-bold text-[#f4f6f8]">
+    <div className="flex flex-1 items-center justify-center bg-[var(--theme-page)] p-6 text-[var(--theme-text)] transition-colors">
+      <div className="w-full max-w-[470px] border border-[var(--theme-border)] bg-[var(--theme-surface)] px-6 py-8 transition-colors sm:px-9 sm:py-9">
+        <div className="mb-6 flex justify-end">
+          <ThemeToggle />
+        </div>
+
+        <h1 className="mb-8 text-center text-3xl font-bold text-[var(--theme-text)]">
           ログイン
         </h1>
 
@@ -59,7 +64,7 @@ export default function LoginPage() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="nickname"
-              className="text-xs font-bold text-[#7fa7c5]"
+              className="text-xs font-bold text-[var(--theme-text)]"
             >
               ニックネーム
             </label>
@@ -70,14 +75,14 @@ export default function LoginPage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={30}
-              className="h-12 rounded-[10px] border border-white/30 bg-[#151a20] px-3.5 text-[#f4f6f8] outline-none transition-colors placeholder:text-[#89929e] focus:border-white/70"
+              className="h-12 border border-[var(--theme-border)] bg-[var(--theme-surface-deep)] px-3.5 text-[var(--theme-text)] outline-none transition-colors placeholder:text-[var(--theme-placeholder)] focus:border-[var(--theme-border-strong)]"
               placeholder="たろう"
               autoFocus
             />
           </div>
 
           {error && (
-            <p role="alert" className="text-sm text-[#ff6b6b]">
+            <p role="alert" className="text-sm text-[var(--theme-danger-text)]">
               {error}
             </p>
           )}
@@ -85,7 +90,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="h-12 cursor-pointer rounded-[10px] border border-white/20 bg-[#6f98b8] px-[18px] font-bold text-[#101820] transition-colors hover:bg-[#80a7c4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-12 cursor-pointer border border-[var(--theme-border)] bg-[var(--theme-accent)] px-[18px] font-bold text-[var(--theme-accent-contrast)] transition-colors hover:bg-[var(--theme-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "はじめています..." : "はじめる"}
           </button>
