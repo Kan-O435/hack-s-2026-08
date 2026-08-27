@@ -8,6 +8,10 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :sessions, only: [ :create ]
+      resources :rooms, only: [ :create, :show ]
+      post "rooms/:passcode/join", to: "rooms#join"
+      patch "rooms/:id/start", to: "rooms#start"
+      get "me/rooms", to: "me#rooms"
     end
   end
 
