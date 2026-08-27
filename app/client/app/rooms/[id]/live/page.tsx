@@ -18,8 +18,8 @@ const PREFERRED_MIME_TYPES = ["audio/webm", "audio/mp4", "audio/ogg"];
 
 // この3つはブラウザ・マイクの環境差で最適値が変わるので、実機で様子を見て調整する前提の初期値
 const SPEECH_RMS_THRESHOLD = 10; // 0-100スケール。この値を超えたら「話している」とみなす
-const SILENCE_DURATION_MS = 1000; // これだけ無音が続いたら発話の区切りとみなす
-const MIN_SPEECH_MS = 300; // これより短い発話は誤検知(物音等)とみなして送信しない
+const SILENCE_DURATION_MS = 600; // これだけ無音が続いたら発話の区切りとみなす
+const MIN_SPEECH_MS = 120; // これより短い発話は誤検知(物音等)とみなして送信しない。「え」等の短い相槌は100ms程度しかないため低めに設定
 
 function pickMimeType(): string {
   if (typeof MediaRecorder === "undefined") return "";

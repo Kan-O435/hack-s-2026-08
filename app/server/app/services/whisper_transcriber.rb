@@ -3,6 +3,12 @@ require "net/http"
 class WhisperTranscriber
   ENDPOINT = URI("https://api.openai.com/v1/audio/transcriptions")
 
+  # 短い相槌・掛け声(え、うわ等)は音声情報が少なく他言語に誤認識されやすいため、
+  # 期待する内容をヒントとして与えて拾いやすくする
+  TRANSCRIPTION_PROMPT =
+    "これは日本語の雑談の音声です。「え、」「うわー」「はは」「ふふ」のような" \
+    "短い相槌・掛け声も、聞こえたとおりに省略せず書き起こしてください。"
+
   def self.transcribe(audio_bytes, filename:, content_type:)
     boundary = SecureRandom.hex(16)
     body = build_body(boundary, audio_bytes, filename, content_type)
@@ -25,11 +31,14 @@ class WhisperTranscriber
 
   def self.build_body(boundary, audio_bytes, filename, content_type)
     parts = []
-    parts << text_part(boundary, "model", "whisper-1")
+    parts << text_part(boundary, "model", "gpt-4o-mini-transcribe")
     parts << text_part(boundary, "language", "ja")
+    parts << text_part(boundary, "prompt", TRANSCRIPTION_PROMPT)
     parts << file_part(boundary, "file", filename, content_type, audio_bytes)
     parts << "--#{boundary}--\r\n"
-    parts.join
+    # 日本語(UTF-8)のテキストパートと音声(BINARY)のパートを混在させてjoinすると
+    # Encoding::CompatibilityErrorになるため、bytesとして結合する
+    parts.map(&:b).join
   end
   private_class_method :build_body
 
