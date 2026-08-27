@@ -17,7 +17,12 @@ default: &default
   encoding: unicode
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  #
+  # プールは「Pumaのリクエスト処理スレッド」と「:asyncジョブアダプタのスレッド」の両方が
+  # 同一プロセス内で共有するため、RAILS_MAX_THREADS(Pumaスレッド数)だけでなく
+  # JOB_MAX_THREADS(config/environments/production.rb参照)の分も見込んで確保する。
+  # 旧: `max_connections:` というキーは誤り(ActiveRecordが認識せずデフォルト5固定になっていた)。
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 }.to_i + ENV.fetch("JOB_MAX_THREADS") { 5 }.to_i %>
 
 
 development:

@@ -1,4 +1,7 @@
 class Room < ApplicationRecord
+  # 大人数だと会話が成立しなくなる(発話が重なる・Action Cableのブロードキャストが人数分飛ぶ)ための上限
+  MAX_PARTICIPANTS = 6
+
   belongs_to :host_user, class_name: "User"
   belongs_to :top_user, class_name: "User", optional: true
   has_many :room_participants, dependent: :destroy
