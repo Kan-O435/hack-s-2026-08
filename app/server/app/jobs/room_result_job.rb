@@ -2,6 +2,7 @@ class RoomResultJob < ApplicationJob
   queue_as :default
 
   TOP_N = 5
+  VOICE_ROAST_TOP_N = 3
 
   def perform(room_id)
     room = Room.find_by(id: room_id)
@@ -23,6 +24,23 @@ class RoomResultJob < ApplicationJob
       result.update!(total_score: total_score, critique: critique)
     end
 
+    dispatch_voice_roasts(room)
+
     RoomChannel.broadcast_to(room, event: "result_ready")
+  end
+
+  private
+
+  # 上位3人だけ音声煽りを生成する。それ以外の参加者の音声サンプルはもう使わないので破棄する
+  def dispatch_voice_roasts(room)
+    ranked_results = RoomResult.where(room: room).order(total_score: :desc)
+    top_results = ranked_results.first(VOICE_ROAST_TOP_N)
+    top_user_ids = top_results.map(&:user_id)
+
+    top_results.each { |result| VoiceRoastJob.perform_later(result.id) }
+
+    room.participants.where.not(id: top_user_ids).find_each do |user|
+      VoiceSampleStore.cleanup_user(room_id: room.id, user_id: user.id)
+    end
   end
 end

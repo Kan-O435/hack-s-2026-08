@@ -14,6 +14,7 @@ export default function ResultPage() {
   const router = useRouter();
   const [data, setData] = useState<RoomResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [playingUserId, setPlayingUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -46,6 +47,29 @@ export default function ResultPage() {
       clearInterval(timer);
     };
   }, [params.id, router]);
+
+  async function playVoiceRoast(userId: number) {
+    const auth = getAuth();
+    if (!auth || playingUserId !== null) return;
+
+    setPlayingUserId(userId);
+    try {
+      const res = await apiFetch(`/api/v1/rooms/${params.id}/voice_roast/${userId}`, auth.token);
+      if (!res.ok) {
+        setPlayingUserId(null);
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => setPlayingUserId(null);
+      audio.onerror = () => setPlayingUserId(null);
+      await audio.play();
+    } catch {
+      setPlayingUserId(null);
+    }
+  }
 
   if (error) {
     return (
@@ -82,6 +106,21 @@ export default function ResultPage() {
           </div>
 
           <p className="mb-4 text-black">{result.critique}</p>
+
+          {result.voice_roast_status === "processing" && (
+            <p className="mb-4 text-sm text-black opacity-60">🔊 本人の声で煽る音声を準備中...</p>
+          )}
+
+          {result.voice_roast_status === "ready" && (
+            <button
+              type="button"
+              onClick={() => playVoiceRoast(result.user_id)}
+              disabled={playingUserId !== null}
+              className="mb-4 border border-black bg-white px-3 py-2 text-sm text-black disabled:opacity-50"
+            >
+              {playingUserId === result.user_id ? "▶ 再生中..." : "▶ 本人の声で聞く"}
+            </button>
+          )}
 
           {result.top_lines.length > 0 && (
             <ul className="flex flex-col gap-1">

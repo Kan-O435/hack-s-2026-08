@@ -304,6 +304,10 @@ export default function LivePage() {
 
       {error && <p className="border border-black p-4 text-black">{error}</p>}
 
+      <p className="text-xs text-black opacity-60">
+        ⚠ この会話の音声は文字起こし・冷笑判定に加え、結果画面で「本人の声で読み上げる」演出にも使われます
+      </p>
+
       <div className="flex-1 overflow-y-auto border border-black p-4">
         {utterances.length === 0 ? (
           <p className="text-black">まだ発言がありません</p>
