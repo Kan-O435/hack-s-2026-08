@@ -1,6 +1,9 @@
 class VoiceRoastJob < ApplicationJob
   queue_as :default
 
+  # 多少品質が落ちてもいい前提であえて低めに設定している(ElevenLabsの推奨は30秒〜)
+  MIN_SPOKEN_DURATION_MS = 6_000
+
   def perform(room_result_id)
     result = RoomResult.find_by(id: room_result_id)
     return unless result
@@ -9,18 +12,31 @@ class VoiceRoastJob < ApplicationJob
 
     begin
       unless VoiceCloner.configured?
+        Rails.logger.warn("VoiceRoastJob: ELEVENLABS_API_KEY未設定のためスキップ room_result=#{room_result_id}")
         result.update!(voice_roast_status: :unavailable)
         return
       end
 
-      unless VoiceSampleStore.enough_samples?(room_id: result.room_id, user_id: result.user_id)
+      total_duration_ms = result.room.utterances.where(user_id: result.user_id).sum(:duration_ms)
+      if total_duration_ms < MIN_SPOKEN_DURATION_MS
+        Rails.logger.warn(
+          "VoiceRoastJob: 発話時間が足りないためスキップ room_result=#{room_result_id} duration_ms=#{total_duration_ms}"
+        )
+        result.update!(voice_roast_status: :unavailable)
+        return
+      end
+
+      sample_paths = VoiceSampleStore.sample_paths(room_id: result.room_id, user_id: result.user_id)
+      if sample_paths.empty?
+        # 本番環境(Railway等)はファイルシステムが揮発性のため、デプロイ直後などでサンプルが
+        # 消えていることがある。DB上は発話時間があるのにここに来る場合はそれを疑うこと
+        Rails.logger.warn("VoiceRoastJob: 音声サンプルファイルが見つからない room_result=#{room_result_id}")
         result.update!(voice_roast_status: :unavailable)
         return
       end
 
       result.update!(voice_roast_status: :processing)
 
-      sample_paths = VoiceSampleStore.sample_paths(room_id: result.room_id, user_id: result.user_id)
       voice_id = VoiceCloner.clone_voice("room#{result.room_id}-user#{result.user_id}", sample_paths)
 
       top_utterance = result.room.utterances

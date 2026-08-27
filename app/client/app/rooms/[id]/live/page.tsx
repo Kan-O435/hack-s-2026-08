@@ -148,7 +148,13 @@ export default function LivePage() {
 
   async function initMic() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          noiseSuppression: true,
+          echoCancellation: true,
+          autoGainControl: true,
+        },
+      });
       streamRef.current = stream;
       mimeTypeRef.current = pickMimeType();
 

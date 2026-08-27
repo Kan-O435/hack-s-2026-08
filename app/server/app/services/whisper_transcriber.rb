@@ -4,10 +4,12 @@ class WhisperTranscriber
   ENDPOINT = URI("https://api.openai.com/v1/audio/transcriptions")
 
   # 短い相槌・掛け声(え、うわ等)は音声情報が少なく他言語に誤認識されやすいため、
-  # 期待する内容をヒントとして与えて拾いやすくする
+  # 期待する内容・話し方のヒントを与えて拾いやすくする
   TRANSCRIPTION_PROMPT =
-    "これは日本語の雑談の音声です。「え、」「うわー」「はは」「ふふ」のような" \
-    "短い相槌・掛け声も、聞こえたとおりに省略せず書き起こしてください。"
+    "これは友人同士の日本語の雑談・妄想話の音声です。タメ口・口語表現が多く、" \
+    "「え、」「うわー」「はは」「ふふ」のような短い相槌・掛け声や、" \
+    "「俺たち」「結局」「本当の自分」のような話し言葉特有の言い回しも、" \
+    "聞こえたとおりに省略せず書き起こしてください。"
 
   def self.transcribe(audio_bytes, filename:, content_type:)
     boundary = SecureRandom.hex(16)
@@ -31,7 +33,7 @@ class WhisperTranscriber
 
   def self.build_body(boundary, audio_bytes, filename, content_type)
     parts = []
-    parts << text_part(boundary, "model", "gpt-4o-mini-transcribe")
+    parts << text_part(boundary, "model", "gpt-4o-transcribe")
     parts << text_part(boundary, "language", "ja")
     parts << text_part(boundary, "prompt", TRANSCRIPTION_PROMPT)
     parts << file_part(boundary, "file", filename, content_type, audio_bytes)
