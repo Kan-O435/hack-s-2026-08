@@ -29,6 +29,7 @@ services:
       RAILS_ENV: development
       FRONTEND_ORIGIN: http://localhost:3001
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEYが未設定です。リポジトリ直下に.envを作成し ANTHROPIC_API_KEY=sk-ant-... を書いてください}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEYが未設定です。リポジトリ直下の.envに OPENAI_API_KEY=sk-... を書いてください(Whisper文字起こし用)}
     depends_on:
       db:
         condition: service_healthy

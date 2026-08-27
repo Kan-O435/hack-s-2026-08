@@ -10,11 +10,30 @@ module Api
           return render_error("forbidden", "このルームの参加者ではありません", :forbidden)
         end
 
-        utterance = room.utterances.new(utterance_params.merge(user: current_user))
+        audio = params[:audio]
+        transcript = params[:transcript]
+        unless audio || transcript.present?
+          return render_error("invalid_utterance", "音声またはテキストが必要です", :unprocessable_entity)
+        end
+
+        utterance = room.utterances.new(
+          utterance_params.merge(user: current_user, transcript: audio ? "(文字起こし中...)" : transcript)
+        )
 
         if utterance.save
           RoomChannel.broadcast_to(room, utterance_json(utterance))
-          JudgeUtteranceJob.perform_later(utterance.id)
+
+          if audio
+            TranscribeUtteranceJob.perform_later(
+              utterance.id,
+              Base64.strict_encode64(audio.read),
+              audio.content_type
+            )
+          else
+            # マイク非対応ブラウザの保険経路。文字起こし不要なので直接冷笑判定へ
+            JudgeUtteranceJob.perform_later(utterance.id)
+          end
+
           render json: utterance_json(utterance), status: :created
         else
           render_error("invalid_utterance", utterance.errors.full_messages.join(", "), :unprocessable_entity)
@@ -25,7 +44,7 @@ module Api
 
       def utterance_params
         params.permit(
-          :transcript, :spoken_at, :duration_ms,
+          :spoken_at, :duration_ms,
           :pause_before_ms, :volume_drop_ratio, :speech_rate, :realtime_score
         )
       end
