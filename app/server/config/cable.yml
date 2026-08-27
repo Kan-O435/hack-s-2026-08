@@ -9,9 +9,6 @@ test:
   adapter: test
 
 production:
-  adapter: solid_cable
-  connects_to:
-    database:
-      writing: cable
-  polling_interval: 0.1.seconds
-  message_retention: 1.day
+  # 単一Postgresのみのホスティング(Railway等)を想定し、solid_cableではなくasyncを使う。
+  # 単一インスタンス前提のデモ用途なら問題ない(複数インスタンスへのスケールは不可)。
+  adapter: async
