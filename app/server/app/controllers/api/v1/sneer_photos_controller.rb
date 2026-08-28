@@ -28,10 +28,10 @@ module Api
         end
       end
 
+      # 図鑑は全員で共有しているため(履歴・sneer_cards参照)、削除も本人限定にはしない
       def destroy
         utterance = Utterance.find_by(id: params[:id])
         return render_error("not_found", "発話が見つかりません", :not_found) unless utterance
-        return render_error("forbidden", "自分の写真のみ削除できます", :forbidden) unless utterance.user_id == current_user.id
 
         utterance.sneer_photo.purge if utterance.sneer_photo.attached?
         utterance.update!(snapshot_captured_at: nil)

@@ -12,5 +12,11 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     resource "/api/*",
       headers: :any,
       methods: [ :get, :post, :put, :patch, :delete, :options, :head ]
+
+    # 冷笑図鑑の画像を共有カード合成のためcanvasで読み込む(fetch)必要があるため、
+    # Active Storageのディスク配信ルートもCORS許可する(GETのみでよい)
+    resource "/rails/active_storage/*",
+      headers: :any,
+      methods: [ :get, :options, :head ]
   end
 end
