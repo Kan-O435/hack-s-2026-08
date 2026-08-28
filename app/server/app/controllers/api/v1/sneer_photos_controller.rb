@@ -22,6 +22,7 @@ module Api
         utterance.sneer_photo.attach(photo)
 
         if utterance.save
+          ExpressionBonusJob.perform_later(utterance.id)
           render json: photo_json(utterance), status: :created
         else
           render_error("invalid_photo", utterance.errors.full_messages.join(", "), :unprocessable_entity)
@@ -34,7 +35,7 @@ module Api
         return render_error("not_found", "発話が見つかりません", :not_found) unless utterance
 
         utterance.sneer_photo.purge if utterance.sneer_photo.attached?
-        utterance.update!(snapshot_captured_at: nil)
+        utterance.update!(snapshot_captured_at: nil, expression_bonus: nil, expression_comment: nil)
         head :no_content
       end
 
