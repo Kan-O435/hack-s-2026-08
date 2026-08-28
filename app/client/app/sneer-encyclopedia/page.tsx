@@ -181,7 +181,7 @@ export default function SneerEncyclopediaPage() {
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         {card.utterance.cringe_score != null && (
-                          <span className="bg-[var(--theme-accent)] px-2 py-1 text-xs font-bold text-[var(--theme-accent-contrast)]">冷笑度 {card.utterance.cringe_score}</span>
+                          <span className="bg-[#ffcc66] px-2 py-1 text-xs font-bold text-black">冷笑度 {card.utterance.cringe_score}</span>
                         )}
                         {card.expression_bonus != null && card.expression_bonus > 0 && (
                           <span className="bg-[var(--theme-accent)] px-2 py-1 text-xs font-bold text-[var(--theme-accent-contrast)]">表情+{card.expression_bonus}</span>
