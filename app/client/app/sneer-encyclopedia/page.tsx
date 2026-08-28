@@ -17,6 +17,7 @@ export default function SneerEncyclopediaPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [sharingId, setSharingId] = useState<number | null>(null);
 
   async function loadCards(targetPage: number) {
     const auth = getAuth();
@@ -73,6 +74,35 @@ export default function SneerEncyclopediaPage() {
       setError(deleteError instanceof Error ? deleteError.message : "写真を削除できませんでした");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleShare(card: SneerCard) {
+    setSharingId(card.id);
+    setError(null);
+    try {
+      const response = await fetch(card.photo_url);
+      if (!response.ok) throw new Error();
+      const blob = await response.blob();
+      const file = new File([blob], `sneer-${card.id}.jpg`, { type: blob.type || "image/jpeg" });
+      const shareData = {
+        files: [file],
+        title: "冷笑図鑑",
+        text: `${card.speaker.nickname}さんの冷笑写真「${card.utterance.cringe_phrase || card.utterance.transcript}」`,
+      };
+
+      if (navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        // Web Share非対応の環境(主にPCブラウザ)では、画像を新しいタブで開いて
+        // 長押し/右クリックで保存・共有してもらう
+        window.open(card.photo_url, "_blank");
+      }
+    } catch (shareError) {
+      if (shareError instanceof Error && shareError.name === "AbortError") return;
+      window.open(card.photo_url, "_blank");
+    } finally {
+      setSharingId(null);
     }
   }
 
@@ -136,16 +166,26 @@ export default function SneerEncyclopediaPage() {
                     {card.utterance.cringe_reason && <p className="text-sm text-[var(--theme-muted)]">{card.utterance.cringe_reason}</p>}
                     <div className="flex items-center justify-between gap-3 border-t border-[var(--theme-border)] pt-3">
                       <time dateTime={capturedAt} className="text-xs text-[var(--theme-muted)]">{new Date(capturedAt).toLocaleString("ja-JP")}</time>
-                      {canDelete && (
+                      <div className="flex shrink-0 gap-2">
                         <button
                           type="button"
-                          onClick={() => void handleDelete(card)}
-                          disabled={deletingId === card.id}
-                          className="shrink-0 border border-[var(--theme-danger-border)] px-3 py-1 text-xs text-[var(--theme-danger-text)] disabled:opacity-50"
+                          onClick={() => void handleShare(card)}
+                          disabled={sharingId === card.id}
+                          className="border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-3 py-1 text-xs hover:bg-[var(--theme-surface-hover)] disabled:opacity-50"
                         >
-                          {deletingId === card.id ? "削除中..." : "写真を削除"}
+                          {sharingId === card.id ? "共有中..." : "共有"}
                         </button>
-                      )}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(card)}
+                            disabled={deletingId === card.id}
+                            className="border border-[var(--theme-danger-border)] px-3 py-1 text-xs text-[var(--theme-danger-text)] disabled:opacity-50"
+                          >
+                            {deletingId === card.id ? "削除中..." : "写真を削除"}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </li>

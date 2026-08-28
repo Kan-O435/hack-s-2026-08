@@ -23,12 +23,12 @@ module Api
         }
       end
 
+      # 履歴と同様、アカウントの概念が薄いため特定ユーザーの参加ルームに絞らず全員分を共有する
       def sneer_cards
         page = [ params.fetch(:page, 1).to_i, 1 ].max
         per_page = params.fetch(:per_page, 20).to_i.clamp(1, 50)
-        room_ids = current_user.room_participants.select(:room_id)
         scope = Utterance
-          .where(room_id: room_ids, sneer_detected: true)
+          .where(sneer_detected: true)
           .joins(:sneer_photo_attachment)
           .includes(:room, :user, sneer_photo_attachment: :blob)
           .order(snapshot_captured_at: :desc, id: :desc)
