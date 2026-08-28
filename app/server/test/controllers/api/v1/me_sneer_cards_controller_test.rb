@@ -10,28 +10,30 @@ class Api::V1::MeSneerCardsControllerTest < ActionDispatch::IntegrationTest
     @room.room_participants.create!(user: @speaker, joined_at: Time.current)
   end
 
-  test "returns only attached sneer cards from rooms the current user joined" do
+  # ニックネームだけの簡易ログインでアカウントの概念が薄いため、図鑑は参加ルームに絞らず
+  # 全員分を共有する(履歴と同じ方針。me_controller.rb#sneer_cards参照)
+  test "returns all attached sneer cards regardless of room membership" do
     older = create_card(room: @room, user: @speaker, captured_at: 2.minutes.ago, transcript: "古い冷笑")
     newer = create_card(room: @room, user: @speaker, captured_at: 1.minute.ago, transcript: "新しい冷笑")
-    create_card(room: unjoined_room, user: @speaker, captured_at: Time.current, transcript: "見えない冷笑")
+    unjoined = create_card(room: unjoined_room, user: @speaker, captured_at: Time.current, transcript: "未参加ルームの冷笑")
     create_utterance(room: @room, user: @speaker, sneer_detected: true, transcript: "写真なし")
     create_card(room: @room, user: @speaker, captured_at: Time.current, transcript: "非冷笑", sneer_detected: false)
 
-    get "/api/v1/me/sneer_cards", params: { page: 1, per_page: 1 }, headers: auth_headers(@viewer)
+    get "/api/v1/me/sneer_cards", params: { page: 1, per_page: 2 }, headers: auth_headers(@viewer)
 
     assert_response :ok
     body = response.parsed_body
-    assert_equal 2, body.dig("pagination", "total_count")
+    assert_equal 3, body.dig("pagination", "total_count")
     assert_equal 2, body.dig("pagination", "total_pages")
-    assert_equal [ newer.id ], body.fetch("cards").pluck("id")
+    assert_equal [ unjoined.id, newer.id ], body.fetch("cards").pluck("id")
 
     card = body.fetch("cards").first
     assert_equal @speaker.nickname, card.dig("speaker", "nickname")
-    assert_equal "新しい冷笑", card.dig("utterance", "transcript")
-    assert_equal @room.name, card.dig("room", "name")
+    assert_equal "未参加ルームの冷笑", card.dig("utterance", "transcript")
+    assert_equal unjoined_room.name, card.dig("room", "name")
     assert_match %r{\Ahttp://www\.example\.com/rails/active_storage/}, card.fetch("photo_url")
 
-    get "/api/v1/me/sneer_cards", params: { page: 2, per_page: 1 }, headers: auth_headers(@viewer)
+    get "/api/v1/me/sneer_cards", params: { page: 2, per_page: 2 }, headers: auth_headers(@viewer)
 
     assert_equal [ older.id ], response.parsed_body.fetch("cards").pluck("id")
   end

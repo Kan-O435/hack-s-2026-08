@@ -19,6 +19,7 @@ export default function SneerEncyclopediaPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [sharingId, setSharingId] = useState<number | null>(null);
+  const [brokenIds, setBrokenIds] = useState<Set<number>>(new Set());
 
   async function loadCards(targetPage: number) {
     const auth = getAuth();
@@ -149,14 +150,28 @@ export default function SneerEncyclopediaPage() {
               return (
                 <li key={card.id} className="overflow-hidden rounded-lg border border-[var(--theme-border)] bg-[var(--theme-surface)]">
                   <div className="relative aspect-[4/3] bg-black">
-                    <Image
-                      src={card.photo_url}
-                      alt={`${card.speaker.nickname}さんの冷笑写真`}
-                      fill
-                      unoptimized
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover"
-                    />
+                    {brokenIds.has(card.id) ? (
+                      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-[var(--theme-surface-deep)] p-4 text-center text-[var(--theme-muted)]">
+                        <p className="text-sm">写真が見つかりませんでした</p>
+                        <p className="text-xs">サーバー側で失われている可能性があります</p>
+                      </div>
+                    ) : (
+                      <Image
+                        src={card.photo_url}
+                        alt={`${card.speaker.nickname}さんの冷笑写真`}
+                        fill
+                        unoptimized
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                        onError={() =>
+                          setBrokenIds((prev) => {
+                            const next = new Set(prev);
+                            next.add(card.id);
+                            return next;
+                          })
+                        }
+                      />
+                    )}
                   </div>
                   <div className="flex flex-col gap-3 p-4">
                     <div className="flex items-start justify-between gap-3">
@@ -176,7 +191,7 @@ export default function SneerEncyclopediaPage() {
                         <button
                           type="button"
                           onClick={() => void handleShare(card)}
-                          disabled={sharingId === card.id}
+                          disabled={sharingId === card.id || brokenIds.has(card.id)}
                           className="border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-3 py-1 text-xs hover:bg-[var(--theme-surface-hover)] disabled:opacity-50"
                         >
                           {sharingId === card.id ? "共有中..." : "共有"}
