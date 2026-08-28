@@ -107,13 +107,27 @@ export async function buildSneerShareCard(card: SneerCard): Promise<Blob> {
     reasonLines = wrapText(measureCtx, card.utterance.cringe_reason, contentWidth);
   }
 
+  let expressionCommentLines: string[] = [];
+  const expressionCommentLineHeight = 34;
+  if (card.expression_comment) {
+    measureCtx.font = "italic 24px sans-serif";
+    expressionCommentLines = wrapText(measureCtx, `表情: ${card.expression_comment}`, contentWidth);
+  }
+
   const nicknameBlockHeight = 56 + 56; // ニックネーム行 + ルーム名行
   const quoteBlockHeight = quoteLines.length * quoteLineHeight + 24;
   const reasonBlockHeight = reasonLines.length > 0 ? reasonLines.length * reasonLineHeight + 24 : 0;
+  const expressionCommentBlockHeight =
+    expressionCommentLines.length > 0 ? expressionCommentLines.length * expressionCommentLineHeight + 24 : 0;
   const footerBlockHeight = 70;
 
   const textAreaHeight =
-    PADDING + nicknameBlockHeight + quoteBlockHeight + reasonBlockHeight + footerBlockHeight;
+    PADDING +
+    nicknameBlockHeight +
+    quoteBlockHeight +
+    reasonBlockHeight +
+    expressionCommentBlockHeight +
+    footerBlockHeight;
   const cardHeight = PHOTO_HEIGHT + textAreaHeight;
 
   const canvas = document.createElement("canvas");
@@ -136,19 +150,29 @@ export async function buildSneerShareCard(card: SneerCard): Promise<Blob> {
   ctx.font = "bold 42px sans-serif";
   ctx.fillText(card.speaker.nickname, PADDING, y);
 
+  const badges: { text: string; bg: string; fg: string }[] = [];
   if (card.utterance.cringe_score != null) {
-    const badgeText = `冷笑度 ${card.utterance.cringe_score}`;
-    ctx.font = "bold 28px sans-serif";
-    const badgeTextWidth = ctx.measureText(badgeText).width;
-    const badgeWidth = badgeTextWidth + 40;
-    const badgeHeight = 56;
-    const badgeX = CARD_WIDTH - PADDING - badgeWidth;
-    const badgeY = y - 6;
-    roundedRectPath(ctx, badgeX, badgeY, badgeWidth, badgeHeight, 10);
-    ctx.fillStyle = "#111111";
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(badgeText, badgeX + 20, badgeY + 14);
+    badges.push({ text: `冷笑度 ${card.utterance.cringe_score}`, bg: "#ffcc66", fg: "#111111" });
+  }
+  if (card.expression_bonus != null && card.expression_bonus > 0) {
+    badges.push({ text: `表情+${card.expression_bonus}`, bg: "#111111", fg: "#ffffff" });
+  }
+
+  if (badges.length > 0) {
+    const badgeHeight = 48;
+    const badgeGap = 8;
+    ctx.font = "bold 24px sans-serif";
+    badges.forEach((badge, index) => {
+      const badgeTextWidth = ctx.measureText(badge.text).width;
+      const badgeWidth = badgeTextWidth + 36;
+      const badgeX = CARD_WIDTH - PADDING - badgeWidth;
+      const badgeY = y - 6 + index * (badgeHeight + badgeGap);
+      roundedRectPath(ctx, badgeX, badgeY, badgeWidth, badgeHeight, 10);
+      ctx.fillStyle = badge.bg;
+      ctx.fill();
+      ctx.fillStyle = badge.fg;
+      ctx.fillText(badge.text, badgeX + 18, badgeY + 12);
+    });
   }
 
   y += 56;
@@ -172,6 +196,15 @@ export async function buildSneerShareCard(card: SneerCard): Promise<Blob> {
       ctx.fillText(line, PADDING, y + index * reasonLineHeight);
     });
     y += reasonBlockHeight;
+  }
+
+  if (expressionCommentLines.length > 0) {
+    ctx.fillStyle = "#555555";
+    ctx.font = "italic 24px sans-serif";
+    expressionCommentLines.forEach((line, index) => {
+      ctx.fillText(line, PADDING, y + index * expressionCommentLineHeight);
+    });
+    y += expressionCommentBlockHeight;
   }
 
   const footerY = y + 24;
