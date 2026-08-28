@@ -6,7 +6,8 @@ import Link from "next/link";
 import { getAuth, type AuthUser } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { createRoomConsumer } from "@/lib/cable";
-import { cringeColor, type ApiErrorBody, type RoomDetail, type Utterance } from "@/lib/rooms";
+import { ChatBubbleList } from "@/components/chat-bubble-list";
+import type { ApiErrorBody, RoomDetail, Utterance } from "@/lib/rooms";
 
 type RoomBroadcast =
   | { event: "utterance_created"; utterance: Utterance }
@@ -315,40 +316,7 @@ export default function LivePage() {
       </p>
 
       <div className="flex-1 overflow-y-auto border border-black p-4">
-        {utterances.length === 0 ? (
-          <p className="text-black">まだ発言がありません</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {utterances.map((u) => {
-              const isOwn = u.user_id === user.id;
-              const isCringe = (u.cringe_score ?? 0) > 0;
-              const accent = cringeColor(u.cringe_score);
-
-              return (
-                <div
-                  key={u.id}
-                  className={`flex flex-col gap-1 ${isOwn ? "items-end" : "items-start"}`}
-                >
-                  <span className="text-xs font-bold text-black">{u.nickname}</span>
-                  <div
-                    className="max-w-[80%] rounded-2xl border-2 px-4 py-2 text-black"
-                    style={{ borderColor: isCringe ? accent : "black" }}
-                  >
-                    <p>{u.transcript}</p>
-                    {isCringe && (
-                      <span
-                        className="mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-bold text-black"
-                        style={{ backgroundColor: accent }}
-                      >
-                        ⚠ 冷笑度 {u.cringe_score}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ChatBubbleList utterances={utterances} currentUserId={user.id} />
       </div>
 
       {supportsMic === true && !micReady && (
