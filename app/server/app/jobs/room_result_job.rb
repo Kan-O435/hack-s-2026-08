@@ -27,9 +27,20 @@ class RoomResultJob < ApplicationJob
     dispatch_voice_roasts(room)
 
     RoomChannel.broadcast_to(room, event: "result_ready")
+
+    maybe_purge_expired_rooms
   end
 
   private
+
+  # 外部のcron(Railwayのスケジュール実行等)に頼らなくても自動で掃除されるように、
+  # ルーム終了のたびに"1日1回だけ"の頻度でおまけとして実行する
+  def maybe_purge_expired_rooms
+    Rails.cache.fetch("room_result_job/purge_expired_rooms_ran_at", expires_in: 1.day) do
+      Room.purge_expired!
+      Time.current
+    end
+  end
 
   # 上位3人だけ音声煽りを生成する。それ以外の参加者の音声サンプルはもう使わないので破棄する
   def dispatch_voice_roasts(room)
