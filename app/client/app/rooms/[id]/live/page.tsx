@@ -63,6 +63,7 @@ export default function LivePage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
   const vadTimerRef = useRef<number | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -154,9 +155,10 @@ export default function LivePage() {
   }
 
   function startSegment() {
-    if (!audioStreamRef.current) return;
+    const streamToRecord = recordingStreamRef.current ?? audioStreamRef.current;
+    if (!streamToRecord) return;
     const recorder = new MediaRecorder(
-      audioStreamRef.current,
+      streamToRecord,
       mimeTypeRef.current ? { mimeType: mimeTypeRef.current } : undefined,
     );
     audioChunksRef.current = [];
@@ -239,11 +241,31 @@ export default function LivePage() {
       mimeTypeRef.current = pickMimeType();
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
+
+      // VAD(発話区間検出)の閾値には影響させたくないので、生の音量をそのままanalyserに渡す
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 2048;
       source.connect(analyser);
+
+      // 録音経路だけ、小声の聞き取りづらさを緩和するために圧縮+持ち上げをかける。
+      // 早口の言葉が飛ぶ・小声の語尾が消えるといった文字起こし精度の劣化は、
+      // 声量の小さい部分をコンプレッサーで持ち上げてSN比を上げることである程度緩和できる
+      const compressor = audioContext.createDynamicsCompressor();
+      compressor.threshold.value = -50;
+      compressor.knee.value = 40;
+      compressor.ratio.value = 12;
+      compressor.attack.value = 0;
+      compressor.release.value = 0.25;
+      const makeupGain = audioContext.createGain();
+      makeupGain.gain.value = 1.6;
+      const recordingDestination = audioContext.createMediaStreamDestination();
+      source.connect(compressor);
+      compressor.connect(makeupGain);
+      makeupGain.connect(recordingDestination);
+
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
+      recordingStreamRef.current = recordingDestination.stream;
       setSupportsMic(true);
       setMicReady(true);
       startVadLoop();
@@ -418,6 +440,7 @@ export default function LivePage() {
       if (finishTimerRef.current !== null) window.clearTimeout(finishTimerRef.current);
       if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
       audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+      recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
       cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
       void audioContextRef.current?.close();
       subscription.unsubscribe();

@@ -37,8 +37,7 @@ class CringeJudge
     要素Cは単なる愚痴・弱音とは区別すること(「疲れた」だけでは対象外、場や他者を否定して沈ませる発言のみ対象)。
 
     report_cringe_judgment ツールで必ず結果を報告してください。
-    - sneer_detected: 冷笑要素Aに当てはまる場合だけtrueにする。
-      冷笑要素B・Cだけに当てはまる場合や、冷笑要素がない場合はfalseにする
+    以下の順番で埋めること(先にスコアと理由を固めてから、最後にsneer_detectedを判定する)。
     - cringe_score: 0〜100の整数。要素A・B・Cいずれかに少しでも当てはまれば10点以上をつけてよい。
       複数の軸に当てはまるほど高くしてよい。気の利いた皮肉・見下し・茶化しほど高く(80点以上も積極的に)つけること。
       要素Cのみに該当する場合は40点を超えないこと。
@@ -46,6 +45,9 @@ class CringeJudge
       および誰かを冷笑せずに素直に頑張っている発言のときだけ
     - phrase: 発話中で最も痛い一節をそのまま引用する。無ければ空文字
     - reason: 一言(20字程度)の理由。無ければ空文字
+    - sneer_detected: 直前に書いたreasonが冷笑要素A(人を茶化す・鼻で笑う反応)に当てはまっていればtrue。
+      冷笑要素B・Cだけが理由の場合や、冷笑要素がない場合はfalse。
+      「うわ」「え」のような短い驚き・呆れの相槌だけでもtrueにしてよい
   PROMPT
 
   JUDGE_TOOL = {
@@ -54,12 +56,15 @@ class CringeJudge
     input_schema: {
       type: "object",
       properties: {
-        sneer_detected: { type: "boolean", description: "人や物事を見下す・茶化す冷笑要素Aを含むか" },
         cringe_score: { type: "integer", description: "0〜100の冷笑ポイント" },
         phrase: { type: "string", description: "最も痛いフレーズの引用" },
-        reason: { type: "string", description: "一言の理由" }
+        reason: { type: "string", description: "一言の理由" },
+        sneer_detected: {
+          type: "boolean",
+          description: "直前のreasonが人や物事を見下す・茶化す冷笑要素Aに当てはまるか"
+        }
       },
-      required: %w[sneer_detected cringe_score phrase reason],
+      required: %w[cringe_score phrase reason sneer_detected],
       additionalProperties: false
     },
     strict: true
