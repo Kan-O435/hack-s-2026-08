@@ -71,6 +71,7 @@ module Api
           nickname: utterance.user.nickname,
           transcript: utterance.transcript,
           spoken_at: utterance.spoken_at,
+          sneer_detected: utterance.sneer_detected,
           cringe_score: utterance.cringe_score,
           cringe_phrase: utterance.cringe_phrase,
           cringe_reason: utterance.cringe_reason
