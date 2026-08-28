@@ -139,7 +139,6 @@ export default function SneerEncyclopediaPage() {
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => {
               const capturedAt = card.snapshot_captured_at ?? card.utterance.spoken_at;
-              const canDelete = card.speaker.user_id === user.id;
               return (
                 <li key={card.id} className="overflow-hidden rounded-lg border border-[var(--theme-border)] bg-[var(--theme-surface)]">
                   <div className="relative aspect-[4/3] bg-black">
@@ -175,16 +174,14 @@ export default function SneerEncyclopediaPage() {
                         >
                           {sharingId === card.id ? "共有中..." : "共有"}
                         </button>
-                        {canDelete && (
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(card)}
-                            disabled={deletingId === card.id}
-                            className="border border-[var(--theme-danger-border)] px-3 py-1 text-xs text-[var(--theme-danger-text)] disabled:opacity-50"
-                          >
-                            {deletingId === card.id ? "削除中..." : "写真を削除"}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(card)}
+                          disabled={deletingId === card.id}
+                          className="border border-[var(--theme-danger-border)] px-3 py-1 text-xs text-[var(--theme-danger-text)] disabled:opacity-50"
+                        >
+                          {deletingId === card.id ? "削除中..." : "写真を削除"}
+                        </button>
                       </div>
                     </div>
                   </div>
