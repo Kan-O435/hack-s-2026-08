@@ -145,9 +145,9 @@ export async function buildSneerShareCard(card: SneerCard): Promise<Blob> {
     const badgeX = CARD_WIDTH - PADDING - badgeWidth;
     const badgeY = y - 6;
     roundedRectPath(ctx, badgeX, badgeY, badgeWidth, badgeHeight, 10);
-    ctx.fillStyle = "#ffcc66";
-    ctx.fill();
     ctx.fillStyle = "#111111";
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
     ctx.fillText(badgeText, badgeX + 20, badgeY + 14);
   }
 

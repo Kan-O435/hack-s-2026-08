@@ -145,7 +145,7 @@ function HallOfFameCard({
   const topLine = result.top_lines[0];
 
   return (
-    <section className="hall-of-fame-reveal overflow-hidden rounded-2xl border-2 border-[#ffcc66] bg-[var(--theme-surface)]">
+    <section className="hall-of-fame-reveal overflow-hidden rounded-2xl border-2 border-[var(--theme-border-strong)] bg-[var(--theme-surface)]">
       {result.photo_url && (
         <div className="relative aspect-[4/3] w-full bg-black">
           <Image src={result.photo_url} alt={`${result.nickname}さんの冷笑写真`} fill unoptimized className="object-cover" />
@@ -154,20 +154,20 @@ function HallOfFameCard({
 
       <div className="flex flex-col gap-4 p-6">
         <div className="text-center">
-          <p className="text-xs font-bold tracking-widest text-[#ffcc66]">殿堂入り 本日の冷笑王</p>
+          <p className="text-xs font-bold tracking-widest text-[var(--theme-muted)]">殿堂入り 本日の冷笑王</p>
           <h1 className="mt-1 text-2xl font-bold">{result.nickname}</h1>
-          <p className="mt-2 text-5xl font-bold text-[#ffcc66]">{result.total_score}点</p>
+          <p className="mt-2 text-5xl font-bold text-[var(--theme-text)]">{result.total_score}点</p>
         </div>
 
         {result.expression_bonus != null && result.expression_bonus > 0 && (
           <div className="mx-auto flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="bg-[#d9a8ff] px-2 py-1 font-bold text-black">表情+{result.expression_bonus}</span>
-            {result.expression_comment && <span className="text-[#a855f7] italic">{result.expression_comment}</span>}
+            <span className="bg-[var(--theme-accent)] px-2 py-1 font-bold text-[var(--theme-accent-contrast)]">表情+{result.expression_bonus}</span>
+            {result.expression_comment && <span className="text-[var(--theme-muted)] italic">{result.expression_comment}</span>}
           </div>
         )}
 
         {topLine && (
-          <blockquote className="border-l-4 border-[#ffcc66] pl-3 text-lg font-bold">「{topLine.phrase}」</blockquote>
+          <blockquote className="border-l-4 border-[var(--theme-border-strong)] pl-3 text-lg font-bold">「{topLine.phrase}」</blockquote>
         )}
 
         <p className="text-center text-[var(--theme-muted)]">{result.critique}</p>
@@ -181,7 +181,7 @@ function HallOfFameCard({
             type="button"
             onClick={onPlay}
             disabled={disabled}
-            className="mx-auto border-2 border-[#ffcc66] bg-[var(--theme-surface-deep)] px-6 py-3 text-lg font-bold hover:bg-[var(--theme-surface-hover)] disabled:opacity-50"
+            className="mx-auto border-2 border-[var(--theme-border-strong)] bg-[var(--theme-surface-deep)] px-6 py-3 text-lg font-bold hover:bg-[var(--theme-surface-hover)] disabled:opacity-50"
           >
             {playing ? "▶ 再生中..." : "🔊 本人の声で聞く"}
           </button>

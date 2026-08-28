@@ -181,17 +181,17 @@ export default function SneerEncyclopediaPage() {
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         {card.utterance.cringe_score != null && (
-                          <span className="bg-[#ffcc66] px-2 py-1 text-xs font-bold text-black">冷笑度 {card.utterance.cringe_score}</span>
+                          <span className="bg-[var(--theme-accent)] px-2 py-1 text-xs font-bold text-[var(--theme-accent-contrast)]">冷笑度 {card.utterance.cringe_score}</span>
                         )}
                         {card.expression_bonus != null && card.expression_bonus > 0 && (
-                          <span className="bg-[#d9a8ff] px-2 py-1 text-xs font-bold text-black">表情+{card.expression_bonus}</span>
+                          <span className="bg-[var(--theme-accent)] px-2 py-1 text-xs font-bold text-[var(--theme-accent-contrast)]">表情+{card.expression_bonus}</span>
                         )}
                       </div>
                     </div>
                     <blockquote className="border-l-4 border-[var(--theme-border-strong)] pl-3 font-bold">「{card.utterance.cringe_phrase || card.utterance.transcript}」</blockquote>
                     {card.utterance.cringe_reason && <p className="text-sm text-[var(--theme-muted)]">{card.utterance.cringe_reason}</p>}
                     {card.expression_comment && (
-                      <p className="text-sm text-[#a855f7] italic">表情: {card.expression_comment}</p>
+                      <p className="text-sm text-[var(--theme-muted)] italic">表情: {card.expression_comment}</p>
                     )}
                     <div className="flex items-center justify-between gap-3 border-t border-[var(--theme-border)] pt-3">
                       <time dateTime={capturedAt} className="text-xs text-[var(--theme-muted)]">{new Date(capturedAt).toLocaleString("ja-JP")}</time>
