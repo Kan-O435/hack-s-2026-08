@@ -65,6 +65,8 @@ module Api
           id: utterance.id,
           photo_url: expiring_photo_url(utterance.sneer_photo),
           snapshot_captured_at: utterance.snapshot_captured_at,
+          expression_bonus: utterance.expression_bonus,
+          expression_comment: utterance.expression_comment,
           speaker: {
             user_id: utterance.user_id,
             nickname: utterance.user.nickname

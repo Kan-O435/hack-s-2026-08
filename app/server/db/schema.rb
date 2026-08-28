@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_100000) do
     t.text "cringe_reason"
     t.integer "cringe_score"
     t.integer "duration_ms", null: false
+    t.integer "expression_bonus"
+    t.text "expression_comment"
     t.integer "pause_before_ms"
     t.integer "realtime_score"
     t.bigint "room_id", null: false

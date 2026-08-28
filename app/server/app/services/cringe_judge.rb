@@ -81,7 +81,35 @@ class CringeJudge
     カギ括弧や説明は付けないこと。
   PROMPT
 
+  EXPRESSION_SYSTEM_PROMPT = <<~PROMPT.freeze
+    あなたは「妄想ポエム痛さ判定機」の表情煽り担当AIです。
+    冷笑判定された発言をした瞬間に撮影された顔写真が渡されます。
+    「どれだけドヤ顔・したり顔・真顔で冷笑を決めているか」を採点してください。
+    真剣に得意げな顔、余裕たっぷりな半笑い、目を逸らして誤魔化しているような顔ほど高得点。
+    普通の表情や困り顔は低得点でよい。
+
+    report_expression_bonus ツールで必ず結果を報告してください。
+    - bonus: 0〜30の整数。表情の「煽り度」が強いほど高く
+    - comment: 表情を一言(15字程度)でからかうコメント。無ければ空文字
+  PROMPT
+
+  EXPRESSION_TOOL = {
+    name: "report_expression_bonus",
+    description: "冷笑した瞬間の表情をボーナス点として採点する",
+    input_schema: {
+      type: "object",
+      properties: {
+        bonus: { type: "integer", description: "0〜30の表情ボーナス" },
+        comment: { type: "string", description: "表情をからかう一言コメント" }
+      },
+      required: %w[bonus comment],
+      additionalProperties: false
+    },
+    strict: true
+  }.freeze
+
   JudgeResult = Struct.new(:sneer_detected, :cringe_score, :phrase, :reason, keyword_init: true)
+  ExpressionResult = Struct.new(:bonus, :comment, keyword_init: true)
 
   # この3語が含まれる発話は判定基準に関わらず問答無用で120点(通常上限100を超える)
   FORCED_TRIGGER_WORDS = %w[うお ドワー きちー].freeze
@@ -140,6 +168,36 @@ class CringeJudge
 
       text_block = message.content.find { |b| b.type == :text }
       text_block&.text.to_s
+    end
+
+    def judge_expression(image_bytes:, content_type:, phrase:)
+      message = client.messages.create(
+        model: MODEL,
+        max_tokens: 200,
+        system_: [ { type: "text", text: EXPRESSION_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } } ],
+        tools: [ EXPRESSION_TOOL ],
+        tool_choice: { type: "tool", name: "report_expression_bonus" },
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: { type: "base64", media_type: content_type, data: Base64.strict_encode64(image_bytes) }
+              },
+              { type: "text", text: "この発言をした瞬間の顔です: 「#{phrase}」" }
+            ]
+          }
+        ]
+      )
+
+      block = message.content.find { |b| b.type == :tool_use }
+      return ExpressionResult.new(bonus: 0, comment: "") unless block
+
+      input = block.input
+      bonus = input[:bonus].to_i.clamp(0, 30)
+
+      ExpressionResult.new(bonus: bonus, comment: bonus.positive? ? input[:comment].to_s : "")
     end
 
     def voice_roast_line(nickname:, top_phrase:)
