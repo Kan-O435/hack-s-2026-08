@@ -3,17 +3,21 @@ module Api
     class MeController < ApplicationController
       before_action :authenticate_user!
 
+      # ニックネームだけの簡易ログインでアカウントの概念が薄いため、履歴は特定ユーザーに
+      # 紐付けず全員で共有する(誰でも過去の会話を見られる)
       def rooms
-        results = current_user.room_results.includes(:room).order(created_at: :desc)
+        rooms = Room.joins(:room_results).where(status: :finished).distinct.order(finished_at: :desc)
 
         render json: {
-          rooms: results.map do |r|
+          rooms: rooms.map do |room|
+            top = room.room_results.order(total_score: :desc).first
             {
-              id: r.room_id,
-              name: r.room.name,
-              finished_at: r.room.finished_at,
-              my_total_score: r.total_score,
-              my_title: title_for(r.total_score)
+              id: room.id,
+              name: room.name,
+              finished_at: room.finished_at,
+              top_nickname: top.user.nickname,
+              top_total_score: top.total_score,
+              top_title: title_for(top.total_score)
             }
           end
         }

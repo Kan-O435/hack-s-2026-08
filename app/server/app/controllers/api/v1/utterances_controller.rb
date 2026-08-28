@@ -4,7 +4,7 @@ module Api
       before_action :authenticate_user!
 
       def index
-        room = find_room_for_participant
+        room = find_room
         return unless room
 
         utterances = room.utterances.includes(:user).order(:spoken_at, :id)
@@ -47,12 +47,15 @@ module Api
 
       private
 
-      def find_room_for_participant
+      def find_room
         room = Room.find_by(id: params[:room_id])
-        unless room
-          render_error("not_found", "ルームが見つかりません", :not_found)
-          return nil
-        end
+        render_error("not_found", "ルームが見つかりません", :not_found) unless room
+        room
+      end
+
+      def find_room_for_participant
+        room = find_room
+        return nil unless room
         unless room.room_participants.exists?(user: current_user)
           render_error("forbidden", "このルームの参加者ではありません", :forbidden)
           return nil
