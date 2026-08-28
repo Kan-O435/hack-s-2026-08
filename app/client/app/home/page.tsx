@@ -11,8 +11,9 @@ type RoomHistoryItem = {
   id: number;
   name: string;
   finished_at: string;
-  my_total_score: number;
-  my_title: string;
+  top_nickname: string;
+  top_total_score: number;
+  top_title: string;
 };
 
 export default function HomePage() {
@@ -43,6 +44,22 @@ export default function HomePage() {
   function handleLogout() {
     clearAuth();
     router.replace("/login");
+  }
+
+  async function handleDelete(roomId: number, event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!window.confirm("この会話履歴を削除しますか？元に戻せません")) return;
+
+    const auth = getAuth();
+    if (!auth) return;
+
+    const res = await apiFetch(`/api/v1/rooms/${roomId}`, auth.token, { method: "DELETE" });
+    if (res.ok) {
+      setRooms((prev) => prev?.filter((room) => room.id !== roomId) ?? prev);
+    } else {
+      setError("削除に失敗しました");
+    }
   }
 
   if (!user) {
@@ -110,19 +127,27 @@ export default function HomePage() {
           {rooms && rooms.length > 0 && (
             <ul className="flex flex-col gap-3">
               {rooms.map((room) => (
-                <li key={room.id}>
+                <li key={room.id} className="flex items-stretch gap-2">
                   <Link
                     href={`/rooms/${room.id}/transcript`}
-                    className="grid gap-2 border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4 text-[var(--theme-text)] transition-colors hover:border-[var(--theme-border-strong)] hover:bg-[var(--theme-surface-hover)] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-4"
+                    className="grid flex-1 gap-2 border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4 text-[var(--theme-text)] transition-colors hover:border-[var(--theme-border-strong)] hover:bg-[var(--theme-surface-hover)] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-4"
                   >
                     <span className="min-w-0 truncate">{room.name}</span>
                     <span className="text-[var(--theme-text)]">
-                      {room.my_title}（{room.my_total_score}点）
+                      {room.top_nickname}: {room.top_title}（{room.top_total_score}点）
                     </span>
                     <span className="text-sm text-[var(--theme-muted)]">
                       {new Date(room.finished_at).toLocaleDateString("ja-JP")}
                     </span>
                   </Link>
+                  <button
+                    type="button"
+                    onClick={(event) => handleDelete(room.id, event)}
+                    aria-label="この会話履歴を削除"
+                    className="shrink-0 border border-[var(--theme-danger-border)] bg-[var(--theme-danger-surface)] px-3 text-sm text-[var(--theme-danger-text)] transition-colors hover:opacity-80"
+                  >
+                    削除
+                  </button>
                 </li>
               ))}
             </ul>

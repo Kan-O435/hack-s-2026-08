@@ -39,9 +39,6 @@ module Api
       def show
         room = Room.find_by(id: params[:id])
         return render_error("not_found", "ルームが見つかりません", :not_found) unless room
-        unless room.room_participants.exists?(user: current_user)
-          return render_error("forbidden", "このルームの参加者ではありません", :forbidden)
-        end
 
         render json: room_json(room)
       end
@@ -73,9 +70,6 @@ module Api
       def result
         room = Room.find_by(id: params[:id])
         return render_error("not_found", "ルームが見つかりません", :not_found) unless room
-        unless room.room_participants.exists?(user: current_user)
-          return render_error("forbidden", "このルームの参加者ではありません", :forbidden)
-        end
 
         results = RoomResult.where(room: room).includes(:user)
         return render json: { status: "processing" } if results.empty?
@@ -90,9 +84,6 @@ module Api
       def voice_roast
         room = Room.find_by(id: params[:id])
         return render_error("not_found", "ルームが見つかりません", :not_found) unless room
-        unless room.room_participants.exists?(user: current_user)
-          return render_error("forbidden", "このルームの参加者ではありません", :forbidden)
-        end
 
         result = RoomResult.find_by(room: room, user_id: params[:user_id])
         unless result&.ready? && File.exist?(result.voice_roast_path)
@@ -100,6 +91,19 @@ module Api
         end
 
         send_file result.voice_roast_path, type: "audio/mpeg", disposition: "inline"
+      end
+
+      def destroy
+        room = Room.find_by(id: params[:id])
+        return render_error("not_found", "ルームが見つかりません", :not_found) unless room
+
+        room.room_results.find_each do |result|
+          File.delete(result.voice_roast_path) if File.exist?(result.voice_roast_path)
+        end
+        VoiceSampleStore.cleanup_room(room_id: room.id)
+        room.destroy!
+
+        head :no_content
       end
 
       private
