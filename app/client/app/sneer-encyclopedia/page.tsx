@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { getAuth, type AuthUser } from "@/lib/auth";
+import { buildSneerShareCard } from "@/lib/sneer-card-image";
 import type { ApiErrorBody, SneerCard, SneerCardsResponse } from "@/lib/rooms";
 
 export default function SneerEncyclopediaPage() {
@@ -81,26 +82,32 @@ export default function SneerEncyclopediaPage() {
     setSharingId(card.id);
     setError(null);
     try {
-      const response = await fetch(card.photo_url);
-      if (!response.ok) throw new Error();
-      const blob = await response.blob();
-      const file = new File([blob], `sneer-${card.id}.jpg`, { type: blob.type || "image/jpeg" });
+      // 写真単体ではなく、ニックネーム・引用・冷笑度まで合成した図鑑カードそのものを共有する
+      const blob = await buildSneerShareCard(card);
+      const file = new File([blob], `sneer-${card.id}.jpg`, { type: "image/jpeg" });
       const shareData = {
         files: [file],
         title: "冷笑図鑑",
-        text: `${card.speaker.nickname}さんの冷笑写真「${card.utterance.cringe_phrase || card.utterance.transcript}」`,
+        text: `${card.speaker.nickname}さんの冷笑「${card.utterance.cringe_phrase || card.utterance.transcript}」`,
       };
 
       if (navigator.canShare?.(shareData)) {
         await navigator.share(shareData);
       } else {
-        // Web Share非対応の環境(主にPCブラウザ)では、画像を新しいタブで開いて
-        // 長押し/右クリックで保存・共有してもらう
-        window.open(card.photo_url, "_blank");
+        // Web Share非対応の環境(主にPCブラウザ)では画像をダウンロードしてもらう。
+        // window.openはcanvas合成のawaitを挟んだ後だとポップアップブロックされることがあるため使わない
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `sneer-${card.id}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
       }
     } catch (shareError) {
       if (shareError instanceof Error && shareError.name === "AbortError") return;
-      window.open(card.photo_url, "_blank");
+      setError(shareError instanceof Error ? shareError.message : "共有画像の作成に失敗しました");
     } finally {
       setSharingId(null);
     }
@@ -139,7 +146,6 @@ export default function SneerEncyclopediaPage() {
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => {
               const capturedAt = card.snapshot_captured_at ?? card.utterance.spoken_at;
-              const canDelete = card.speaker.user_id === user.id;
               return (
                 <li key={card.id} className="overflow-hidden rounded-lg border border-[var(--theme-border)] bg-[var(--theme-surface)]">
                   <div className="relative aspect-[4/3] bg-black">
@@ -175,16 +181,14 @@ export default function SneerEncyclopediaPage() {
                         >
                           {sharingId === card.id ? "共有中..." : "共有"}
                         </button>
-                        {canDelete && (
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(card)}
-                            disabled={deletingId === card.id}
-                            className="border border-[var(--theme-danger-border)] px-3 py-1 text-xs text-[var(--theme-danger-text)] disabled:opacity-50"
-                          >
-                            {deletingId === card.id ? "削除中..." : "写真を削除"}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(card)}
+                          disabled={deletingId === card.id}
+                          className="border border-[var(--theme-danger-border)] px-3 py-1 text-xs text-[var(--theme-danger-text)] disabled:opacity-50"
+                        >
+                          {deletingId === card.id ? "削除中..." : "写真を削除"}
+                        </button>
                       </div>
                     </div>
                   </div>
