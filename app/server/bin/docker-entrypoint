@@ -1,11 +1,23 @@
 #!/bin/bash -e
 
+# setprivはuid/gidを切り替えるだけでHOMEは更新しないため、明示的に指定する
+# (指定しないとrootの$HOMEを引き継ぎ、bundlerが書き込めず警告が出る)
+RUN_AS_RAILS=(env HOME=/home/rails setpriv --reuid=1000 --regid=1000 --init-groups)
+
+# コンテナはrootで起動する(Dockerfile参照)。Railwayの永続ボリュームは新規マウント時に
+# root所有になり、railsユーザー(uid 1000)から書き込めず写真等の保存が失敗するため、
+# 特権を落とす前に毎回所有権を揃える。
+if [ "$(id -u)" = "0" ]; then
+  mkdir -p /rails/storage
+  chown -R rails:rails /rails/storage
+fi
+
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   # Postgres の private networking がコンテナ起動直後はまだ疎通していないことがあり、
   # そのタイミングだと db:prepare が接続エラーで落ちるため数回リトライする。
   for i in 1 2 3 4 5; do
-    if ./bin/rails db:prepare; then
+    if "${RUN_AS_RAILS[@]}" ./bin/rails db:prepare; then
       break
     fi
     echo "db:prepare failed (attempt ${i}/5), retrying in 3s..." >&2
@@ -13,4 +25,4 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   done
 fi
 
-exec "${@}"
+exec "${RUN_AS_RAILS[@]}" "${@}"

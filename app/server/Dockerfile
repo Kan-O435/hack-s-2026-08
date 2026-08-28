@@ -57,16 +57,19 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 # Final stage for app image
 FROM base
 
-# Run and own only the runtime files as a non-root user for security
+# Run and own only the runtime files as a non-root user for security.
+# コンテナ自体はrootのまま起動し(USERは切り替えない)、docker-entrypointの中で
+# Railwayの永続ボリューム(storage/)の所有権をrailsユーザーに合わせてから権限を落とす。
+# ボリュームは新規マウント時にroot所有になるため、ここでUSERを固定すると
+# 起動時に書き込み権限が無くなってしまう。
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
-USER 1000:1000
 
 # Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
-# Entrypoint prepares the database.
+# Entrypoint prepares the database and fixes volume ownership, then drops to the rails user.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server via Thruster by default, this can be overwritten at runtime
