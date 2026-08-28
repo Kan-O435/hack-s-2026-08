@@ -41,6 +41,8 @@ export type SneerCard = {
   id: number;
   photo_url: string;
   snapshot_captured_at: string | null;
+  expression_bonus: number | null;
+  expression_comment: string | null;
   speaker: { user_id: number; nickname: string };
   utterance: {
     transcript: string;
