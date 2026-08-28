@@ -114,12 +114,22 @@ module Api
           .order(cringe_score: :desc)
           .limit(RoomResultJob::TOP_N)
 
+        # 殿堂入り演出用に、冷笑写真が撮れていれば一番スコアの高い発話の1枚を添える(無くてもよい)
+        best_photo_utterance = room.utterances
+          .where(user: result.user)
+          .joins(:sneer_photo_attachment)
+          .order(cringe_score: :desc)
+          .first
+
         {
           user_id: result.user_id,
           nickname: result.user.nickname,
           total_score: result.total_score,
           critique: result.critique,
           voice_roast_status: result.voice_roast_status,
+          photo_url: best_photo_utterance && expiring_photo_url(best_photo_utterance.sneer_photo),
+          expression_bonus: best_photo_utterance&.expression_bonus,
+          expression_comment: best_photo_utterance&.expression_comment,
           top_lines: top_lines.map do |u|
             { phrase: u.cringe_phrase.presence || u.transcript, score: u.cringe_score.to_i, reason: u.cringe_reason }
           end

@@ -78,6 +78,9 @@ export type ParticipantResult = {
   total_score: number;
   critique: string;
   voice_roast_status: VoiceRoastStatus;
+  photo_url: string | null;
+  expression_bonus: number | null;
+  expression_comment: string | null;
   top_lines: ResultLine[];
 };
 
