@@ -33,8 +33,10 @@ class WhisperTranscriber
 
   def self.build_body(boundary, audio_bytes, filename, content_type)
     parts = []
-    parts << text_part(boundary, "model", "gpt-4o-transcribe")
-    parts << text_part(boundary, "language", "ja")
+    parts << text_part(boundary, "model", "gpt-transcribe")
+    # gpt-transcribeは旧language(単数)ではなくlanguages(配列)を使う。
+    # 両方同時に送るとAPIに拒否されるため、languagesのみ送る
+    parts << text_part(boundary, "languages[]", "ja")
     parts << text_part(boundary, "prompt", TRANSCRIPTION_PROMPT)
     parts << file_part(boundary, "file", filename, content_type, audio_bytes)
     parts << "--#{boundary}--\r\n"
