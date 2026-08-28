@@ -32,6 +32,7 @@ class TranscribeUtteranceJob < ApplicationJob
       filename: "utterance.#{extension}",
       content_type: content_type
     )
+    transcript = TranscriptRefiner.refine(transcript)
 
     utterance.update!(transcript: transcript.presence || "(聞き取れませんでした)")
 
