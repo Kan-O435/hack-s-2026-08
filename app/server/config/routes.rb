@@ -16,7 +16,10 @@ Rails.application.routes.draw do
       get "rooms/:id/voice_roast/:user_id", to: "rooms#voice_roast"
       get "rooms/:room_id/utterances", to: "utterances#index"
       post "rooms/:room_id/utterances", to: "utterances#create"
+      put "utterances/:id/sneer_photo", to: "sneer_photos#update"
+      delete "utterances/:id/sneer_photo", to: "sneer_photos#destroy"
       get "me/rooms", to: "me#rooms"
+      get "me/sneer_cards", to: "me#sneer_cards"
     end
   end
 

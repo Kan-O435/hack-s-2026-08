@@ -68,7 +68,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Link
             href="/rooms/join"
             className="flex min-h-32 items-center justify-center border border-[var(--theme-border)] bg-[var(--theme-surface)] p-8 text-center font-bold text-[var(--theme-text)] transition-colors hover:border-[var(--theme-border-strong)] hover:bg-[var(--theme-surface-hover)]"
@@ -80,6 +80,12 @@ export default function HomePage() {
             className="flex min-h-32 items-center justify-center border border-[var(--theme-border)] bg-[var(--theme-surface)] p-8 text-center font-bold text-[var(--theme-text)] transition-colors hover:border-[var(--theme-border-strong)] hover:bg-[var(--theme-surface-hover)]"
           >
             チャットを作る
+          </Link>
+          <Link
+            href="/sneer-encyclopedia"
+            className="flex min-h-32 items-center justify-center border border-[var(--theme-border)] bg-[var(--theme-surface)] p-8 text-center font-bold text-[var(--theme-text)] transition-colors hover:border-[var(--theme-border-strong)] hover:bg-[var(--theme-surface-hover)]"
+          >
+            冷笑図鑑を見る
           </Link>
         </section>
 
