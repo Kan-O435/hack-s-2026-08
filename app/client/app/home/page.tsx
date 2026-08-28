@@ -106,7 +106,7 @@ export default function HomePage() {
               {rooms.map((room) => (
                 <li key={room.id}>
                   <Link
-                    href={`/rooms/${room.id}/result`}
+                    href={`/rooms/${room.id}/transcript`}
                     className="grid gap-2 border border-[var(--theme-border)] bg-[var(--theme-surface)] p-4 text-[var(--theme-text)] transition-colors hover:border-[var(--theme-border-strong)] hover:bg-[var(--theme-surface-hover)] sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-4"
                   >
                     <span className="min-w-0 truncate">{room.name}</span>
