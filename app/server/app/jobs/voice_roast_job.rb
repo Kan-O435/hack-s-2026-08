@@ -49,9 +49,11 @@ class VoiceRoastJob < ApplicationJob
       line = CringeJudge.voice_roast_line(nickname: result.user.nickname, top_phrase: top_phrase)
       audio = VoiceCloner.text_to_speech(voice_id, line)
 
-      FileUtils.mkdir_p(result.voice_roast_path.dirname)
-      File.binwrite(result.voice_roast_path, audio)
-
+      result.voice_roast_audio.attach(
+        io: StringIO.new(audio),
+        filename: "voice_roast_#{result.id}.mp3",
+        content_type: "audio/mpeg"
+      )
       result.update!(voice_roast_status: :ready)
     rescue StandardError => e
       Rails.logger.error("VoiceRoastJob failed for room_result=#{room_result_id}: #{e.message}")

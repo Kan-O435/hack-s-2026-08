@@ -83,13 +83,15 @@ class Api::V1::SneerPhotosControllerTest < ActionDispatch::IntegrationTest
     assert_not ActiveStorage::Blob.exists?(blob_id)
   end
 
-  test "rejects deleting another user's photo" do
+  # 図鑑は全員で共有しているため(sneer_photos_controller.rb#destroy参照)、
+  # 削除は撮影者本人に限定していない
+  test "allows deleting another user's photo" do
     put_photo(@utterance, @user, Time.current)
 
     delete "/api/v1/utterances/#{@utterance.id}/sneer_photo", headers: auth_headers(@other_user)
 
-    assert_response :forbidden
-    assert @utterance.reload.sneer_photo.attached?
+    assert_response :no_content
+    assert_not @utterance.reload.sneer_photo.attached?
   end
 
   private
