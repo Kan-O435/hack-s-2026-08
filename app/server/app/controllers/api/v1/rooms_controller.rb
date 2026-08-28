@@ -86,20 +86,18 @@ module Api
         return render_error("not_found", "ルームが見つかりません", :not_found) unless room
 
         result = RoomResult.find_by(room: room, user_id: params[:user_id])
-        unless result&.ready? && File.exist?(result.voice_roast_path)
+        unless result&.ready? && result.voice_roast_audio.attached?
           return render_error("not_found", "音声はまだ用意できていません", :not_found)
         end
 
-        send_file result.voice_roast_path, type: "audio/mpeg", disposition: "inline"
+        send_data result.voice_roast_audio.download, type: "audio/mpeg", disposition: "inline"
       end
 
       def destroy
         room = Room.find_by(id: params[:id])
         return render_error("not_found", "ルームが見つかりません", :not_found) unless room
 
-        room.room_results.find_each do |result|
-          File.delete(result.voice_roast_path) if File.exist?(result.voice_roast_path)
-        end
+        # room_results(dependent: :destroy)経由でvoice_roast_audioもpurge_laterされる
         VoiceSampleStore.cleanup_room(room_id: room.id)
         room.destroy!
 
