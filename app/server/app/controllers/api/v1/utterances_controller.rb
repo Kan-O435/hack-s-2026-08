@@ -3,12 +3,17 @@ module Api
     class UtterancesController < ApplicationController
       before_action :authenticate_user!
 
+      def index
+        room = find_room_for_participant
+        return unless room
+
+        utterances = room.utterances.includes(:user).order(:spoken_at, :id)
+        render json: { utterances: utterances.map { |u| utterance_list_json(u) } }
+      end
+
       def create
-        room = Room.find_by(id: params[:room_id])
-        return render_error("not_found", "ルームが見つかりません", :not_found) unless room
-        unless room.room_participants.exists?(user: current_user)
-          return render_error("forbidden", "このルームの参加者ではありません", :forbidden)
-        end
+        room = find_room_for_participant
+        return unless room
 
         audio = params[:audio]
         transcript = params[:transcript]
@@ -41,6 +46,33 @@ module Api
       end
 
       private
+
+      def find_room_for_participant
+        room = Room.find_by(id: params[:room_id])
+        unless room
+          render_error("not_found", "ルームが見つかりません", :not_found)
+          return nil
+        end
+        unless room.room_participants.exists?(user: current_user)
+          render_error("forbidden", "このルームの参加者ではありません", :forbidden)
+          return nil
+        end
+        room
+      end
+
+      def utterance_list_json(utterance)
+        {
+          id: utterance.id,
+          room_id: utterance.room_id,
+          user_id: utterance.user_id,
+          nickname: utterance.user.nickname,
+          transcript: utterance.transcript,
+          spoken_at: utterance.spoken_at,
+          cringe_score: utterance.cringe_score,
+          cringe_phrase: utterance.cringe_phrase,
+          cringe_reason: utterance.cringe_reason
+        }
+      end
 
       def utterance_params
         params.permit(

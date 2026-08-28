@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       patch "rooms/:id/finish", to: "rooms#finish"
       get "rooms/:id/result", to: "rooms#result"
       get "rooms/:id/voice_roast/:user_id", to: "rooms#voice_roast"
+      get "rooms/:room_id/utterances", to: "utterances#index"
       post "rooms/:room_id/utterances", to: "utterances#create"
       put "utterances/:id/sneer_photo", to: "sneer_photos#update"
       delete "utterances/:id/sneer_photo", to: "sneer_photos#destroy"

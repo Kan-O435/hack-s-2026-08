@@ -227,7 +227,10 @@ export default function LivePage() {
   async function initMic() {
     if (audioStreamRef.current) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { noiseSuppression: true, echoCancellation: true, autoGainControl: true },
+        video: false,
+      });
       if (!mountedRef.current) {
         stream.getTracks().forEach((track) => track.stop());
         return;
