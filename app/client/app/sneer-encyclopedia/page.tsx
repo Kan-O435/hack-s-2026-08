@@ -19,6 +19,8 @@ export default function SneerEncyclopediaPage() {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [sharingId, setSharingId] = useState<number | null>(null);
+  const [xSharingId, setXSharingId] = useState<number | null>(null);
+  const [xShareNotice, setXShareNotice] = useState<string | null>(null);
   const [brokenIds, setBrokenIds] = useState<Set<number>>(new Set());
 
   async function loadCards(targetPage: number) {
@@ -79,6 +81,17 @@ export default function SneerEncyclopediaPage() {
     }
   }
 
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+
   async function handleShare(card: SneerCard) {
     setSharingId(card.id);
     setError(null);
@@ -97,14 +110,7 @@ export default function SneerEncyclopediaPage() {
       } else {
         // Web Share非対応の環境(主にPCブラウザ)では画像をダウンロードしてもらう。
         // window.openはcanvas合成のawaitを挟んだ後だとポップアップブロックされることがあるため使わない
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `sneer-${card.id}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+        downloadBlob(blob, `sneer-${card.id}.jpg`);
       }
     } catch (shareError) {
       if (shareError instanceof Error && shareError.name === "AbortError") return;
@@ -119,7 +125,31 @@ export default function SneerEncyclopediaPage() {
     const scoreText = card.utterance.cringe_score != null ? `(冷笑度${card.utterance.cringe_score})` : "";
     const text = `${card.speaker.nickname}さんの冷笑「${phrase}」${scoreText} #冷笑エンジン #冷笑図鑑`;
     const intentUrl = `https://x.com/intent/post?text=${encodeURIComponent(text)}`;
+
+    // Xの投稿画面はテキスト/URLしか受け取れず、画像を直接添付する手段がないため、
+    // 画像はクリップボードにコピーして投稿画面側で貼り付けてもらう形にする。
+    // window.openはユーザー操作の直後(await前)に呼ばないとポップアップブロックされる。
     window.open(intentUrl, "_blank", "noopener,noreferrer");
+
+    void (async () => {
+      setXSharingId(card.id);
+      setXShareNotice(null);
+      setError(null);
+      try {
+        const blob = await buildSneerShareCard(card, "image/png");
+        if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          setXShareNotice("画像をコピーしました。Xの投稿画面に貼り付けて(Ctrl/Cmd+V)ください");
+        } else {
+          downloadBlob(blob, `sneer-${card.id}.png`);
+          setXShareNotice("この環境では画像を自動コピーできないため、ダウンロードしました。投稿画面に手動で添付してください");
+        }
+      } catch {
+        setError("共有用の画像を準備できませんでした");
+      } finally {
+        setXSharingId(null);
+      }
+    })();
   }
 
   if (!user) return null;
@@ -141,6 +171,13 @@ export default function SneerEncyclopediaPage() {
           <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-[var(--theme-danger-border)] bg-[var(--theme-danger-surface)] p-4 text-[var(--theme-danger-text)]">
             <p>{error}</p>
             <button type="button" onClick={() => void loadCards(page)} className="border border-current px-3 py-1 text-sm">再読み込み</button>
+          </div>
+        )}
+
+        {xShareNotice && (
+          <div role="status" className="flex flex-wrap items-center justify-between gap-3 border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] p-4">
+            <p>{xShareNotice}</p>
+            <button type="button" onClick={() => setXShareNotice(null)} className="border border-current px-3 py-1 text-sm">閉じる</button>
           </div>
         )}
 
@@ -215,9 +252,10 @@ export default function SneerEncyclopediaPage() {
                         <button
                           type="button"
                           onClick={() => handleShareToX(card)}
-                          className="border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-3 py-1 text-xs hover:bg-[var(--theme-surface-hover)]"
+                          disabled={xSharingId === card.id}
+                          className="border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-3 py-1 text-xs hover:bg-[var(--theme-surface-hover)] disabled:opacity-50"
                         >
-                          Xで共有
+                          {xSharingId === card.id ? "画像準備中..." : "Xで共有"}
                         </button>
                         <button
                           type="button"
