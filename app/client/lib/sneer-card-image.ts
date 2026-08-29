@@ -85,7 +85,10 @@ async function loadImageElement(url: string): Promise<HTMLImageElement> {
 // カード(写真+ニックネーム+引用+講評+日付)を1枚の画像に合成する。
 // InstagramやAirDropはURLではなく画像ファイルを渡す必要があるため、
 // 図鑑の1カード分をそのまま共有できる形にするにはこの合成が要る。
-export async function buildSneerShareCard(card: SneerCard): Promise<Blob> {
+export async function buildSneerShareCard(
+  card: SneerCard,
+  mimeType: "image/jpeg" | "image/png" = "image/jpeg",
+): Promise<Blob> {
   const img = await loadImageElement(card.photo_url);
 
   // 実際の描画前に、文字量に応じた最終的な高さを測るための仮コンテキスト
@@ -227,8 +230,8 @@ export async function buildSneerShareCard(card: SneerCard): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error("画像の生成に失敗しました"))),
-      "image/jpeg",
-      0.92,
+      mimeType,
+      mimeType === "image/jpeg" ? 0.92 : undefined,
     );
   });
 }
