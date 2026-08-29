@@ -114,6 +114,14 @@ export default function SneerEncyclopediaPage() {
     }
   }
 
+  function handleShareToX(card: SneerCard) {
+    const phrase = card.utterance.cringe_phrase || card.utterance.transcript;
+    const scoreText = card.utterance.cringe_score != null ? `(冷笑度${card.utterance.cringe_score})` : "";
+    const text = `${card.speaker.nickname}さんの冷笑「${phrase}」${scoreText} #冷笑エンジン #冷笑図鑑`;
+    const intentUrl = `https://x.com/intent/post?text=${encodeURIComponent(text)}`;
+    window.open(intentUrl, "_blank", "noopener,noreferrer");
+  }
+
   if (!user) return null;
 
   return (
@@ -203,6 +211,13 @@ export default function SneerEncyclopediaPage() {
                           className="border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-3 py-1 text-xs hover:bg-[var(--theme-surface-hover)] disabled:opacity-50"
                         >
                           {sharingId === card.id ? "共有中..." : "共有"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleShareToX(card)}
+                          className="border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-3 py-1 text-xs hover:bg-[var(--theme-surface-hover)]"
+                        >
+                          Xで共有
                         </button>
                         <button
                           type="button"
